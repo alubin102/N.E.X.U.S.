@@ -1,0 +1,14 @@
+{
+  "ratings": [
+    { "id": 1, "heroId": "70", "score": 5, "comment": "Leader exemplaire." }
+  ],
+  "equipments": [
+    { "id": 1, "name": "Bouclier en Vibranium" },
+    { "id": 2, "name": "Armure Mark L" },
+    { "id": 3, "name": "Lance-toiles" }
+  ],
+  "hero_equipments": [
+    { "id": 1, "heroId": "149", "equipmentId": 1 },
+    { "id": 2, "heroId": "346", "equipmentId": 2 }
+  ]
+}
