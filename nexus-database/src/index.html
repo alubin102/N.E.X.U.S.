@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N.E.X.U.S. | Tactical Intelligence Database</title>
+    <link rel="stylesheet" href="src/assets/style.css">
+</head>
+<body>
+    <header>
+        <h1>N.E.X.U.S.</h1>
+        <nav id="main-nav">
+            <a href="#/" data-link>Base de données</a>
+            <a href="#/favorites" data-link>Agents Favoris</a>
+        </nav>
+        <div id="search-container">
+            <input type="text" id="search-input" placeholder="Rechercher un agent (ex: Iron Man)...">
+        </div>
+    </header>
+
+    <main id="app">
+        <div class="loader">Initialisation de la liaison satellite...</div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 N.E.X.U.S. - Accès restreint Niveau 7</p>
+    </footer>
+
+    <script type="module" src="src/app.js"></script>
+</body>
+</html>
