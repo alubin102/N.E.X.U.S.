@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N.E.X.U.S.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-inner">
+            <div class="brand-block">
+                <h1>N.E.X.U.S.</h1>
+                <p>Annuaire immersif des super-héros</p>
+            </div>
+
+            <nav id="main-nav" aria-label="Navigation principale">
+                <a href="#/" data-link>Accueil</a>
+                <a href="#/heroes" data-link>Super-Héros</a>
+                <a href="#/favorites" data-link>Favoris</a>
+                <a href="#/about" data-link>À propos</a>
+            </nav>
+
+            <div id="search-container">
+                <input type="text" id="search-input" placeholder="Rechercher un super-héros (ex: Superman, Iron Man)..." aria-label="Rechercher un super-héros">
+            </div>
+        </div>
+    </header>
+
+    <main id="app">
+        <div class="loader">Chargement...</div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 N.E.X.U.S. - Tous droits réservés</p>
+    </footer>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
