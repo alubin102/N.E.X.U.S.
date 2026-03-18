@@ -37,7 +37,6 @@ const CONFIG = {
         { path: '/heroes/:page', page: 'HeroesList' },
         { path: '/hero/:id', page: 'HeroDetail' },
         { path: '/favorites', page: 'Favorites' },
-        { path: '/about', page: 'About' },
         { path: '*', page: 'Error404' }
     ]
 };

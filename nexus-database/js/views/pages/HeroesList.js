@@ -83,7 +83,6 @@ class HeroesList {
                     </div>
                     <div class="hero-card-body">
                         <h3>${Utils.escapeHtml(hero.name)}</h3>
-                        <p class="hero-alias">${Utils.escapeHtml(hero.alias)}</p>
                         <p class="hero-publisher">${Utils.escapeHtml(hero.publisher)}</p>
                         
                         ${avgRating > 0 ? `
@@ -101,7 +100,6 @@ class HeroesList {
 
         html += '</div>';
 
-        // Pagination
         if (totalPages > 1) {
             html += `
                 <div class="pagination">
@@ -144,10 +142,16 @@ class HeroesList {
                     ? HeroProvider.getHeroesByPublisher(this.currentPublisher)
                     : this.heroes;
                 this.page = 1;
-                window.location.hash = '#/heroes';
+                this.reRender(appElement);
             });
         }
 
+        this.attachFavoriteListeners();
+        this.initLazyLoading();
+    }
+
+    attachFavoriteListeners() {
+        const appElement = document.getElementById('app');
         appElement.querySelectorAll('.favorite-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -160,15 +164,8 @@ class HeroesList {
                 }
             });
         });
-
-        this.initLazyLoading();
     }
 
-    attachListeners() {
-        this.after_render();
-    }
-
-    // Compatibilité: ancien nom
     attachListeners() {
         this.after_render();
     }
@@ -188,6 +185,12 @@ class HeroesList {
             });
             images.forEach(img => imageObserver.observe(img));
         }
+    }
+
+    reRender(appElement) {
+        const html = this.render();
+        appElement.innerHTML = html;
+        this.attachFavoriteListeners();
     }
 }
 

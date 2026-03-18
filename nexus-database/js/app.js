@@ -6,7 +6,6 @@ import Home from './views/pages/Home.js';
 import HeroesList from './views/pages/HeroesList.js';
 import HeroDetail from './views/pages/HeroDetail.js';
 import Favorites from './views/pages/Favorites.js';
-import About from './views/pages/About.js';
 import Error404 from './views/pages/Error404.js';
 
 class App {
@@ -100,10 +99,6 @@ class App {
             
             case 'favorites':
                 page = new Favorites();
-                break;
-            
-            case 'about':
-                page = new About();
                 break;
             
             default:
