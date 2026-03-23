@@ -15,7 +15,6 @@ class HeroProvider {
     }
 
     async loadHeroes() {
-        const localHeroes = await this.loadLocalHeroes();
         let apiHeroes = this.loadApiHeroesFromCache();
 
         if (apiHeroes.length === 0) {
@@ -25,21 +24,8 @@ class HeroProvider {
             }
         }
 
-        this.heroes = this.mergeHeroes(localHeroes, apiHeroes);
+        this.heroes = this.mergeHeroes([], apiHeroes);
         return this.heroes;
-    }
-
-    async loadLocalHeroes() {
-        try {
-            const response = await fetch(CONFIG.api.dataFile || '/data.json');
-            if (response.ok) {
-                const data = await response.json();
-                return data.heroes || [];
-            }
-        } catch (error) {
-            console.error('Erreur chargement data.json:', error);
-        }
-        return [];
     }
 
     loadApiHeroesFromCache() {

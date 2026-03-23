@@ -8,7 +8,6 @@ const CONFIG = {
     api: {
         baseUrl: 'https://www.superheroapi.com/api.php',
         apiKey: '7bea7e85f7979785a2773ca78db33d53',
-        dataFile: '/data.json',
         maxHeroId: 731,
         requestBatchSize: 8
     },
