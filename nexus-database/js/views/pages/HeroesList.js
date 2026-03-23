@@ -1,0 +1,194 @@
+import HeroProvider from '../../services/HeroProvider.js';
+import Utils from '../../services/Utils.js';
+
+class HeroesList {
+    constructor(page = 1) {
+        this.page = parseInt(page) || 1;
+        this.pageSize = 9;
+        this.heroes = HeroProvider.getAllHeroes();
+        this.filteredHeroes = this.heroes;
+        this.currentPublisher = null;
+    }
+
+    render() {
+        const totalPages = Math.ceil(this.filteredHeroes.length / this.pageSize);
+        if (this.page > totalPages && totalPages > 0) {
+            this.page = totalPages;
+        }
+
+        const pagination = Utils.paginate(this.filteredHeroes, this.page, this.pageSize);
+        const publishers = HeroProvider.getPublishers();
+
+        if (this.filteredHeroes.length === 0) {
+            return `
+                <section class="heroes-section">
+                    <div class="section-header">
+                        <h2>Super-Héros</h2>
+                        <div class="filters">
+                            <select id="publisher-filter" class="filter-select">
+                                <option value="">Tous les éditeurs</option>
+                                ${publishers.map(pub => `
+                                    <option value="${pub}">${pub}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="message info">
+                        📭 Aucun super-héro trouvé
+                    </div>
+                </section>
+            `;
+        }
+
+        let html = `
+            <section class="heroes-section">
+                <div class="section-header">
+                    <h2>Super-Héros</h2>
+                    <div class="filters">
+                        <select id="publisher-filter" class="filter-select">
+                            <option value="">Tous les éditeurs</option>
+                            ${publishers.map(pub => `
+                                <option value="${pub}" ${this.currentPublisher === pub ? 'selected' : ''}>${pub}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="heroes-count">
+                    ${this.filteredHeroes.length} super-héro${this.filteredHeroes.length > 1 ? 's' : ''} trouvé${this.filteredHeroes.length > 1 ? 's' : ''}
+                </div>
+
+                <div class="heroes-grid">
+        `;
+
+        pagination.items.forEach(hero => {
+            const isFav = HeroProvider.isFavorite(hero.id);
+            const avgRating = hero.averageRating || 0;
+            
+            html += `
+                <article class="hero-card">
+                    <div class="hero-card-image">
+                        <img 
+                            src="${hero.image || 'https://via.placeholder.com/300x400?text=No+Image'}"
+                            alt="${hero.name}"
+                            class="lazy-load"
+                            data-src="${hero.image || 'https://via.placeholder.com/300x400?text=No+Image'}"
+                            loading="lazy"
+                        >
+                        <button class="favorite-btn ${isFav ? 'active' : ''}" 
+                                data-hero-id="${hero.id}"
+                                title="${isFav ? 'Retirer des favoris' : 'Ajouter aux favoris'}">
+                            ♥
+                        </button>
+                    </div>
+                    <div class="hero-card-body">
+                        <h3>${Utils.escapeHtml(hero.name)}</h3>
+                        <p class="hero-alias">${Utils.escapeHtml(hero.alias)}</p>
+                        <p class="hero-publisher">${Utils.escapeHtml(hero.publisher)}</p>
+                        
+                        ${avgRating > 0 ? `
+                            <div class="hero-rating">
+                                <span class="stars">${this.renderStars(avgRating)}</span>
+                                <span class="rating-value">${avgRating.toFixed(1)}/5</span>
+                            </div>
+                        ` : ''}
+                        
+                        <a href="#/hero/${hero.id}" class="btn btn-small">Détails</a>
+                    </div>
+                </article>
+            `;
+        });
+
+        html += '</div>';
+
+        // Pagination
+        if (totalPages > 1) {
+            html += `
+                <div class="pagination">
+                    ${this.page > 1 ? `
+                        <a href="#/heroes/1" class="btn-page">« Première</a>
+                        <a href="#/heroes/${this.page - 1}" class="btn-page">‹ Précédent</a>
+                    ` : ''}
+                    
+                    <span class="page-info">Page ${this.page} / ${totalPages}</span>
+                    
+                    ${this.page < totalPages ? `
+                        <a href="#/heroes/${this.page + 1}" class="btn-page">Suivant ›</a>
+                        <a href="#/heroes/${totalPages}" class="btn-page">Dernière »</a>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        html += '</section>';
+        return html;
+    }
+
+    renderStars(rating) {
+        const fullStars = Math.floor(rating);
+        const hasHalf = rating % 1 >= 0.5;
+        let stars = '★'.repeat(fullStars);
+        if (hasHalf) stars += '½';
+        stars += '☆'.repeat(5 - Math.ceil(rating));
+        return stars;
+    }
+
+    async after_render() {
+        const appElement = document.getElementById('app');
+
+        const publisherFilter = appElement.querySelector('#publisher-filter');
+        if (publisherFilter) {
+            publisherFilter.addEventListener('change', (e) => {
+                this.currentPublisher = e.target.value;
+                this.filteredHeroes = this.currentPublisher 
+                    ? HeroProvider.getHeroesByPublisher(this.currentPublisher)
+                    : this.heroes;
+                this.page = 1;
+                window.location.hash = '#/heroes';
+            });
+        }
+
+        appElement.querySelectorAll('.favorite-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const heroId = parseInt(btn.dataset.heroId);
+                const hero = HeroProvider.getHeroById(heroId);
+                
+                if (hero) {
+                    const isFav = HeroProvider.toggleFavorite(hero);
+                    btn.classList.toggle('active');
+                }
+            });
+        });
+
+        this.initLazyLoading();
+    }
+
+    attachListeners() {
+        this.after_render();
+    }
+
+    // Compatibilité: ancien nom
+    attachListeners() {
+        this.after_render();
+    }
+
+    initLazyLoading() {
+        if ('IntersectionObserver' in window) {
+            const images = document.querySelectorAll('img.lazy-load');
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.src = img.dataset.src;
+                        img.classList.remove('lazy-load');
+                        observer.unobserve(img);
+                    }
+                });
+            });
+            images.forEach(img => imageObserver.observe(img));
+        }
+    }
+}
+
+export default HeroesList;

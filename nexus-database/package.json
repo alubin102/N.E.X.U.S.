@@ -1,17 +1,18 @@
 {
-  "name": "N.E.X.U.S.",
+  "name": "superhero-directory",
   "version": "1.0.0",
-  "description": "Système de renseignement N.E.X.U.S.",
-  "main": "src/app.js",
+  "description": "Application de répertoire de super-héros avec notation et favoris",
+  "main": "js/app.js",
   "scripts": {
-    "api": "json-server --watch db.json --port 3000",
-    "dev": "webpack serve --mode development",
-    "build": "webpack --mode production"
+    "start": "webpack serve --mode development",
+    "build": "webpack --mode production",
+    "dev": "webpack --mode development",
+    "watch": "webpack --mode development --watch"
   },
+  "dependencies": {},
   "devDependencies": {
-    "webpack": "^5.0.0",
-    "webpack-cli": "^5.0.0",
-    "webpack-dev-server": "^4.0.0",
-    "json-server": "^0.17.0"
+    "webpack": "^5.88.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1"
   }
 }
