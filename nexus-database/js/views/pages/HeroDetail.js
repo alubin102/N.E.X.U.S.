@@ -217,9 +217,7 @@ class HeroDetail {
         }
     }
 
-    attachListeners() {
-        this.after_render();
-    }
+    
 }
 
 export default HeroDetail;

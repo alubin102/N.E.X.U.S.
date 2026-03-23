@@ -186,10 +186,7 @@ class HeroProvider {
         }
         const q = query.toLowerCase();
         return this.heroes.filter(hero =>
-            (hero.name || '').toLowerCase().includes(q) ||
-            (hero.alias || '').toLowerCase().includes(q) ||
-            (hero.description || '').toLowerCase().includes(q) ||
-            (hero.publisher || '').toLowerCase().includes(q)
+            (hero.name || '').toLowerCase().includes(q)
         );
     }
 
