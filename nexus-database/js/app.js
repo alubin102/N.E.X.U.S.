@@ -1,6 +1,7 @@
 import HeroProvider from './services/HeroProvider.js';
 import Utils from './services/Utils.js';
 import CONFIG from './config.js';
+import { showLoader } from './loader.js';
 // Importer les pages
 import Home from './views/pages/Home.js';
 import HeroesList from './views/pages/HeroesList.js';
@@ -36,6 +37,55 @@ function initDomReferences() {
     appElement = document.getElementById('app');
     searchInput = document.getElementById('search-input');
     mainNav = document.getElementById('main-nav');
+}
+
+// Gestionnaire délégué : clic sur une card ouvre la page détail (sans interférer avec le bouton favoris)
+function attachCardNavigation() {
+    if (!appElement) return;
+    appElement.addEventListener('click', async (e) => {
+        // Ignorer si on clique sur le bouton favoris
+        if (e.target.closest('.favorite-btn')) return;
+
+        const card = e.target.closest('.hero-card');
+        if (!card) return;
+
+        const heroId = card.dataset.heroId || card.getAttribute('data-hero-id');
+        if (!heroId) return;
+
+        // Récupérer l'image du héros
+        const hero = HeroProvider.getHeroById(heroId);
+        const heroImage = hero?.image || null;
+
+        // Afficher le loader de profil avant de naviguer
+        const profileSequences = [
+            { label: 'ACCÈS PROFIL',          msg: "Récupération du dossier de l'agent classifié...",  duration: 140 },
+            { label: 'BIOMÉTRIE',            msg: 'Scan biométrique et analyse ADN...',                duration: 130 },
+            { label: 'POUVOIRS DÉTECTÉS',    msg: 'Analyse des capacités métahumaines...',            duration: 150 },
+            { label: 'HISTORIQUE',           msg: 'Consultation des archives opérationnelles...',      duration: 120 },
+            { label: 'SYNCHRONISATION',      msg: 'Synchronisation données tactiques...',              duration: 110 },
+            { label: 'PROFIL CHARGÉ',        msg: 'Profil complet disponible - ACCÈS AUTORISÉ.',      duration: 95 },
+        ];
+
+        await showLoader(profileSequences, 'PROFIL AGENT', 0, heroImage);
+
+        // Créer un écran de transition noir pour bloquer la vue pendant le changement de page
+        const transitionScreen = document.createElement('div');
+        transitionScreen.id = 'transition-screen-loader';
+        transitionScreen.style.cssText = `
+            position: fixed;
+            inset: 0;
+            background: #04090e;
+            z-index: 9999;
+            pointer-events: none;
+        `;
+        document.body.appendChild(transitionScreen);
+
+        // Naviguer vers la page détail
+        window.location.hash = `#/hero/${heroId}`;
+        
+        // Forcer le router immédiatement pour éviter le délai
+        setTimeout(router, 50);
+    });
 }
 
 async function ensureDataLoaded() {
@@ -127,7 +177,7 @@ function displaySearchResults(results, query) {
         const avgRating = hero.averageRating || 0;
 
         html += `
-            <article class="hero-card">
+            <article class="hero-card" data-hero-id="${hero.id}">
                 <div class="hero-card-image">
                     <img 
                         src="${hero.image || 'https://via.placeholder.com/300x400?text=No+Image'}"
@@ -236,6 +286,12 @@ async function router() {
 
     currentPage = pageInstance;
     appElement.innerHTML = await pageInstance.render();
+
+    // Retirer l'écran de transition après que la page soit rendue
+    const transitionScreen = document.getElementById('transition-screen-loader');
+    if (transitionScreen) {
+        transitionScreen.remove();
+    }
 }
 
 // ---------------------------------------
@@ -248,4 +304,10 @@ window.addEventListener('load', () => {
     setupNavigation();
     setupSearch();
     router();
+});
+
+// Attacher la navigation par clic sur les cards (délégué)
+window.addEventListener('load', () => {
+    initDomReferences();
+    attachCardNavigation();
 });

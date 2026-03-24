@@ -37,7 +37,7 @@ class Favorites {
         favorites.forEach(hero => {
             const avgRating = hero.averageRating || 0;
             html += `
-                <article class="hero-card">
+                <article class="hero-card" data-hero-id="${hero.id}">
                     <div class="hero-card-image">
                         <img 
                             src="${hero.image || 'https://via.placeholder.com/300x400?text=No+Image'}"
