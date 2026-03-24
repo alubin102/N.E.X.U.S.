@@ -7,13 +7,19 @@ class HeroDetail {
         this.hero = HeroProvider.getHeroById(this.heroId);
     }
 
-    render() {
+    async render() {
         if (!this.hero) {
-            return `
+            const html = `
                 <div class="message error">
                     ⚠️ Super-héro non trouvé
                 </div>
             `;
+            setTimeout(() => {
+                const appElement = document.getElementById('app');
+                if (!appElement) return;
+                appElement.innerHTML = html;
+            }, 0);
+            return html;
         }
 
         const isFav = HeroProvider.isFavorite(this.hero.id);
@@ -21,7 +27,7 @@ class HeroDetail {
         const avgRating = this.hero.averageRating || 0;
         const stats = this.hero.stats || {};
 
-        return `
+        const html = `
             <section class="hero-detail">
                 <div class="hero-detail-header">
                     <a href="#/heroes" class="back-link">← Retour aux super-héros</a>
@@ -110,6 +116,82 @@ class HeroDetail {
                 </div>
             </section>
         `;
+
+        setTimeout(() => {
+            const appElement = document.getElementById('app');
+            if (!appElement) return;
+            appElement.innerHTML = html;
+
+            const favBtn = appElement.querySelector('.favorite-btn');
+            if (favBtn) {
+                favBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const isFav = HeroProvider.toggleFavorite(this.hero);
+                    favBtn.classList.toggle('active');
+                    favBtn.textContent = isFav ? '♥ Retiré des favoris' : '♥ Ajouter aux favoris';
+                });
+            }
+
+            let selectedRating = 0;
+            const starBtns = appElement.querySelectorAll('.star-btn');
+            const selectedRatingDisplay = appElement.querySelector('#selected-rating');
+
+            starBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    selectedRating = parseInt(btn.dataset.value);
+                    if (selectedRatingDisplay) {
+                        selectedRatingDisplay.textContent = `${selectedRating}/5 sélectionné`;
+                    }
+                    starBtns.forEach((b, idx) => {
+                        b.classList.toggle('active', idx < selectedRating);
+                    });
+                });
+
+                btn.addEventListener('mouseenter', () => {
+                    const value = parseInt(btn.dataset.value);
+                    starBtns.forEach((b, idx) => {
+                        b.style.color = idx < value ? '#FFD700' : '#999';
+                    });
+                });
+            });
+
+            appElement.querySelectorAll('.rating-stars').forEach(container => {
+                container.addEventListener('mouseleave', () => {
+                    starBtns.forEach((b, idx) => {
+                        b.style.color = idx < selectedRating ? '#FFD700' : '#999';
+                    });
+                });
+            });
+
+            const submitBtn = appElement.querySelector('#submit-rating');
+            if (submitBtn) {
+                submitBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (selectedRating === 0) {
+                        alert('Veuillez sélectionner une note');
+                        return;
+                    }
+
+                    const commentElement = appElement.querySelector('#rating-comment');
+                    const comment = commentElement ? commentElement.value : '';
+                    HeroProvider.addRating(this.hero.id, selectedRating, comment);
+                    
+                    alert('Merci pour votre avis ! Recharger la page pour voir les changements.');
+                    window.location.hash = `#/hero/${this.hero.id}`;
+                });
+            }
+
+            const backLink = appElement.querySelector('.back-link');
+            if (backLink) {
+                backLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.location.hash = '#/heroes';
+                });
+            }
+        }, 0);
+
+        return html;
     }
 
     renderStats(stats) {
@@ -145,76 +227,6 @@ class HeroDetail {
 
     renderStarsBig(rating) {
         return this.renderStars(rating);
-    }
-
-    async after_render() {
-        const appElement = document.getElementById('app');
-
-        const favBtn = appElement.querySelector('.favorite-btn');
-        if (favBtn) {
-            favBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const isFav = HeroProvider.toggleFavorite(this.hero);
-                favBtn.classList.toggle('active');
-                favBtn.textContent = isFav ? '♥ Retiré des favoris' : '♥ Ajouter aux favoris';
-            });
-        }
-
-        let selectedRating = 0;
-        const starBtns = appElement.querySelectorAll('.star-btn');
-        const selectedRatingDisplay = appElement.querySelector('#selected-rating');
-
-        starBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                selectedRating = parseInt(btn.dataset.value);
-                selectedRatingDisplay.textContent = `${selectedRating}/5 sélectionné`;
-                
-                starBtns.forEach((b, idx) => {
-                    b.classList.toggle('active', idx < selectedRating);
-                });
-            });
-
-            btn.addEventListener('mouseenter', (e) => {
-                const value = parseInt(btn.dataset.value);
-                starBtns.forEach((b, idx) => {
-                    b.style.color = idx < value ? '#FFD700' : '#999';
-                });
-            });
-        });
-
-        appElement.querySelectorAll('.rating-stars').forEach(container => {
-            container.addEventListener('mouseleave', () => {
-                starBtns.forEach((b, idx) => {
-                    b.style.color = idx < selectedRating ? '#FFD700' : '#999';
-                });
-            });
-        });
-
-        const submitBtn = appElement.querySelector('#submit-rating');
-        if (submitBtn) {
-            submitBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (selectedRating === 0) {
-                    alert('Veuillez sélectionner une note');
-                    return;
-                }
-
-                const comment = appElement.querySelector('#rating-comment').value;
-                HeroProvider.addRating(this.hero.id, selectedRating, comment);
-                
-                alert('Merci pour votre avis ! Recharger la page pour voir les changements.');
-                window.location.hash = `#/hero/${this.hero.id}`;
-            });
-        }
-
-        const backLink = appElement.querySelector('.back-link');
-        if (backLink) {
-            backLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                window.location.hash = '#/heroes';
-            });
-        }
     }
 
     

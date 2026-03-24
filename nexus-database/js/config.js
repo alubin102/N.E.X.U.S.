@@ -19,9 +19,6 @@ const CONFIG = {
     },
     
     cache: {
-        enabled: true,
-        ttl: 3600000,
-        apiHeroesTtl: 86400000
     },
 
     ui: {

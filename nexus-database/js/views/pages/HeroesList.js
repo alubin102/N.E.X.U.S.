@@ -10,7 +10,7 @@ class HeroesList {
         this.currentPublisher = null;
     }
 
-    render() {
+    async render() {
         const totalPages = Math.ceil(this.filteredHeroes.length / this.pageSize);
         if (this.page > totalPages && totalPages > 0) {
             this.page = totalPages;
@@ -20,7 +20,7 @@ class HeroesList {
         const publishers = HeroProvider.getPublishers();
 
         if (this.filteredHeroes.length === 0) {
-            return `
+            const html = `
                 <section class="heroes-section">
                     <div class="section-header">
                         <h2>Super-Héros</h2>
@@ -38,6 +38,28 @@ class HeroesList {
                     </div>
                 </section>
             `;
+            setTimeout(() => {
+                const appElement = document.getElementById('app');
+                if (!appElement) return;
+                appElement.innerHTML = html;
+
+                const publisherFilter = appElement.querySelector('#publisher-filter');
+                if (publisherFilter) {
+                    publisherFilter.addEventListener('change', (e) => {
+                        this.currentPublisher = e.target.value;
+                        this.filteredHeroes = this.currentPublisher 
+                            ? HeroProvider.getHeroesByPublisher(this.currentPublisher)
+                            : this.heroes;
+                        this.page = 1;
+                        this.reRender();
+                    });
+                }
+
+                this.attachFavoriteListeners();
+                this.initLazyLoading();
+            }, 0);
+
+            return html;
         }
 
         let html = `
@@ -119,6 +141,27 @@ class HeroesList {
         }
 
         html += '</section>';
+        setTimeout(() => {
+            const appElement = document.getElementById('app');
+            if (!appElement) return;
+            appElement.innerHTML = html;
+
+            const publisherFilter = appElement.querySelector('#publisher-filter');
+            if (publisherFilter) {
+                publisherFilter.addEventListener('change', (e) => {
+                    this.currentPublisher = e.target.value;
+                    this.filteredHeroes = this.currentPublisher 
+                        ? HeroProvider.getHeroesByPublisher(this.currentPublisher)
+                        : this.heroes;
+                    this.page = 1;
+                    this.reRender();
+                });
+            }
+
+            this.attachFavoriteListeners();
+            this.initLazyLoading();
+        }, 0);
+
         return html;
     }
 
@@ -129,25 +172,6 @@ class HeroesList {
         if (hasHalf) stars += '½';
         stars += '☆'.repeat(5 - Math.ceil(rating));
         return stars;
-    }
-
-    async after_render() {
-        const appElement = document.getElementById('app');
-
-        const publisherFilter = appElement.querySelector('#publisher-filter');
-        if (publisherFilter) {
-            publisherFilter.addEventListener('change', (e) => {
-                this.currentPublisher = e.target.value;
-                this.filteredHeroes = this.currentPublisher 
-                    ? HeroProvider.getHeroesByPublisher(this.currentPublisher)
-                    : this.heroes;
-                this.page = 1;
-                this.reRender(appElement);
-            });
-        }
-
-        this.attachFavoriteListeners();
-        this.initLazyLoading();
     }
 
     attachFavoriteListeners() {
@@ -164,10 +188,6 @@ class HeroesList {
                 }
             });
         });
-    }
-
-    attachListeners() {
-        this.after_render();
     }
 
     initLazyLoading() {
@@ -187,10 +207,8 @@ class HeroesList {
         }
     }
 
-    reRender(appElement) {
-        const html = this.render();
-        appElement.innerHTML = html;
-        this.attachFavoriteListeners();
+    async reRender() {
+        await this.render();
     }
 }
 

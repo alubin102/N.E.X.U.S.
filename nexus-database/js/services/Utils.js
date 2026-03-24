@@ -1,5 +1,5 @@
-class Utils {
-    static escapeHtml(text) {
+const Utils = {
+    escapeHtml(text) {
         if (!text) return '';
         const map = {
             '&': '&amp;',
@@ -8,51 +8,18 @@ class Utils {
             '"': '&quot;',
             "'": '&#039;'
         };
-        return String(text).replace(/[&<>"']/g, m => map[m]);
-    }
+        return String(text).replace(/[&<>"']/g, char => map[char]);
+    },
 
-    static debounce(func, delay) {
+    debounce(fn, delay) {
         let timeoutId;
-        return function (...args) {
+        return (...args) => {
             clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => func.apply(this, args), delay);
+            timeoutId = setTimeout(() => fn(...args), delay);
         };
-    }
+    },
 
-    static throttle(func, limit) {
-        let inThrottle;
-        return function (...args) {
-            if (!inThrottle) {
-                func.apply(this, args);
-                inThrottle = true;
-                setTimeout(() => (inThrottle = false), limit);
-            }
-        };
-    }
-
-    static formatDate(date, format = 'DD/MM/YYYY') {
-        const d = new Date(date);
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        
-        return format
-            .replace('YYYY', year)
-            .replace('MM', month)
-            .replace('DD', day);
-    }
-
-    static highlightText(text, query) {
-        if (!query) return text;
-        const regex = new RegExp(`(${this.escapeRegex(query)})`, 'gi');
-        return text.replace(regex, '<mark>$1</mark>');
-    }
-
-    static escapeRegex(string) {
-        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }
-
-    static paginate(items, page = 1, pageSize = 10) {
+    paginate(items, page = 1, pageSize = 10) {
         const start = (page - 1) * pageSize;
         const end = start + pageSize;
         return {
@@ -61,11 +28,13 @@ class Utils {
             currentPage: page,
             totalItems: items.length
         };
-    }
+    },
 
-    static deepClone(obj) {
-        return JSON.parse(JSON.stringify(obj));
+    parseRequestURL() {
+        const url = location.hash.slice(1).toLowerCase() || '/';
+        const [, resource = null, id = null, verb = null] = url.split('/');
+        return { resource, id, verb };
     }
-}
+};
 
 export default Utils;

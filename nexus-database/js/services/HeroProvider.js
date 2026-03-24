@@ -1,70 +1,46 @@
 import CONFIG from '../config.js';
 
-class HeroProvider {
-    constructor() {
-        this.apiKey = CONFIG.api.apiKey;
-        this.baseUrl = CONFIG.api.baseUrl;
-        this.cache = new Map();
-        this.heroes = [];
-        this.ratings = [];
-        this.favoritesKey = 'hero_favorites';
-        this.ratingsKey = 'hero_ratings';
-        this.apiHeroesCacheKey = 'hero_api_cache';
-        this.apiHeroesCacheMetaKey = 'hero_api_cache_meta';
-        this.favorites = this.loadFavorites();
+export default class HeroProvider {
+    static apiKey = CONFIG.api.apiKey;
+    static baseUrl = CONFIG.api.baseUrl;
+    static cache = new Map();
+    static heroes = [];
+    static ratings = [];
+    static favoritesKey = 'hero_favorites';
+    static ratingsKey = 'hero_ratings';
+    static favorites = HeroProvider.loadFavorites();
+
+    static loadFromCache() {
+        try {
+            const data = localStorage.getItem('hero_cache');
+            return data ? JSON.parse(data) : null;
+        } catch (e) {
+            return null;
+        }
     }
 
-    async loadHeroes() {
-        let apiHeroes = this.loadApiHeroesFromCache();
+    static saveToCache(heroes) {
+        try {
+            localStorage.setItem('hero_cache', JSON.stringify(heroes));
+        } catch (e) {
+        }
+    }
 
-        if (apiHeroes.length === 0) {
-            apiHeroes = await this.fetchAllApiHeroes();
-            if (apiHeroes.length > 0) {
-                this.saveApiHeroesToCache(apiHeroes);
+    static async loadHeroes() {
+        let apiHeroes = HeroProvider.loadFromCache();
+
+        if (apiHeroes === null) {
+            apiHeroes = await HeroProvider.fetchAllApiHeroes();
+            if (apiHeroes && apiHeroes.length > 0) {
+                HeroProvider.saveToCache(apiHeroes);
             }
         }
 
-        this.heroes = this.mergeHeroes([], apiHeroes);
-        return this.heroes;
+        HeroProvider.heroes = HeroProvider.mergeHeroes([], apiHeroes || []);
+        return HeroProvider.heroes;
     }
 
-    loadApiHeroesFromCache() {
-        try {
-            if (!CONFIG.cache.enabled) return [];
-
-            const metaRaw = localStorage.getItem(this.apiHeroesCacheMetaKey);
-            const cacheRaw = localStorage.getItem(this.apiHeroesCacheKey);
-            if (!metaRaw || !cacheRaw) return [];
-
-            const meta = JSON.parse(metaRaw);
-            const ttl = CONFIG.cache.apiHeroesTtl || 86400000;
-            if (!meta.savedAt || Date.now() - meta.savedAt > ttl) {
-                return [];
-            }
-
-            const parsed = JSON.parse(cacheRaw);
-            return Array.isArray(parsed) ? parsed : [];
-        } catch (error) {
-            console.error('Erreur lecture cache API:', error);
-            return [];
-        }
-    }
-
-    saveApiHeroesToCache(heroes) {
-        try {
-            if (!CONFIG.cache.enabled) return;
-
-            localStorage.setItem(this.apiHeroesCacheKey, JSON.stringify(heroes));
-            localStorage.setItem(this.apiHeroesCacheMetaKey, JSON.stringify({
-                savedAt: Date.now(),
-                count: heroes.length
-            }));
-        } catch (error) {
-            console.error('Erreur sauvegarde cache API:', error);
-        }
-    }
-
-    async fetchAllApiHeroes() {
+    static async fetchAllApiHeroes() {
         const maxHeroId = CONFIG.api.maxHeroId || 731;
         const batchSize = CONFIG.api.requestBatchSize || 8;
         const heroes = [];
@@ -72,7 +48,7 @@ class HeroProvider {
         for (let start = 1; start <= maxHeroId; start += batchSize) {
             const end = Math.min(start + batchSize - 1, maxHeroId);
             const ids = Array.from({ length: end - start + 1 }, (_, idx) => start + idx);
-            const batch = await Promise.all(ids.map(id => this.fetchHeroById(id)));
+            const batch = await Promise.all(ids.map(id => HeroProvider.fetchHeroById(id)));
             batch.forEach(hero => {
                 if (hero) heroes.push(hero);
             });
@@ -81,21 +57,21 @@ class HeroProvider {
         return heroes;
     }
 
-    async fetchHeroById(id) {
+    static async fetchHeroById(id) {
         try {
-            const response = await fetch(`${this.baseUrl}/${this.apiKey}/${id}`);
+            const response = await fetch(`${HeroProvider.baseUrl}/${HeroProvider.apiKey}/${id}`);
             if (!response.ok) return null;
 
             const apiHero = await response.json();
             if (!apiHero || apiHero.response !== 'success') return null;
 
-            return this.normalizeApiHero(apiHero);
+            return HeroProvider.normalizeApiHero(apiHero);
         } catch (error) {
             return null;
         }
     }
 
-    normalizeApiHero(apiHero) {
+    static normalizeApiHero(apiHero) {
         const fullName = apiHero.biography?.['full-name'] || '';
         const occupation = apiHero.work?.occupation || '';
         const placeOfBirth = apiHero.biography?.['place-of-birth'] || '';
@@ -109,24 +85,24 @@ class HeroProvider {
             description: descriptionParts.join(' | ') || 'Aucune description disponible',
             image: apiHero.image?.url || '',
             stats: {
-                intelligence: this.toNumber(apiHero.powerstats?.intelligence),
-                strength: this.toNumber(apiHero.powerstats?.strength),
-                speed: this.toNumber(apiHero.powerstats?.speed),
-                durability: this.toNumber(apiHero.powerstats?.durability),
-                power: this.toNumber(apiHero.powerstats?.power),
-                combat: this.toNumber(apiHero.powerstats?.combat)
+                intelligence: HeroProvider.toNumber(apiHero.powerstats?.intelligence),
+                strength: HeroProvider.toNumber(apiHero.powerstats?.strength),
+                speed: HeroProvider.toNumber(apiHero.powerstats?.speed),
+                durability: HeroProvider.toNumber(apiHero.powerstats?.durability),
+                power: HeroProvider.toNumber(apiHero.powerstats?.power),
+                combat: HeroProvider.toNumber(apiHero.powerstats?.combat)
             },
             ratings: [],
             averageRating: 0
         };
     }
 
-    toNumber(value) {
+    static toNumber(value) {
         const n = parseInt(value, 10);
         return Number.isNaN(n) ? 0 : n;
     }
 
-    mergeHeroes(localHeroes, apiHeroes) {
+    static mergeHeroes(localHeroes, apiHeroes) {
         const merged = new Map();
 
         localHeroes.forEach(hero => {
@@ -158,35 +134,35 @@ class HeroProvider {
         return Array.from(merged.values());
     }
 
-    getAllHeroes() {
-        return this.heroes;
+    static getAllHeroes() {
+        return HeroProvider.heroes;
     }
 
-    getHeroById(id) {
-        return this.heroes.find(hero => hero.id === parseInt(id)) || null;
+    static getHeroById(id) {
+        return HeroProvider.heroes.find(hero => hero.id === parseInt(id)) || null;
     }
 
-    searchHeroes(query) {
+    static searchHeroes(query) {
         if (!query || query.trim().length === 0) {
             return [];
         }
         const q = query.toLowerCase();
-        return this.heroes.filter(hero =>
+        return HeroProvider.heroes.filter(hero =>
             (hero.name || '').toLowerCase().includes(q)
         );
     }
 
-    getHeroesByPublisher(publisher) {
-        return this.heroes.filter(hero => hero.publisher === publisher);
+    static getHeroesByPublisher(publisher) {
+        return HeroProvider.heroes.filter(hero => hero.publisher === publisher);
     }
 
-    getPublishers() {
-        return [...new Set(this.heroes.map(hero => hero.publisher).filter(Boolean))];
+    static getPublishers() {
+        return [...new Set(HeroProvider.heroes.map(hero => hero.publisher).filter(Boolean))];
     }
 
-    loadFavorites() {
+    static loadFavorites() {
         try {
-            const data = localStorage.getItem(this.favoritesKey);
+            const data = localStorage.getItem(HeroProvider.favoritesKey);
             return new Map(JSON.parse(data || '[]'));
         } catch (error) {
             console.error('Erreur chargement favoris:', error);
@@ -194,45 +170,45 @@ class HeroProvider {
         }
     }
 
-    saveFavorites() {
+    static saveFavorites() {
         try {
-            const data = JSON.stringify(Array.from(this.favorites.entries()));
-            localStorage.setItem(this.favoritesKey, data);
+            const data = JSON.stringify(Array.from(HeroProvider.favorites.entries()));
+            localStorage.setItem(HeroProvider.favoritesKey, data);
         } catch (error) {
             console.error('Erreur sauvegarde favoris:', error);
         }
     }
 
-    addFavorite(hero) {
-        this.favorites.set(hero.id, hero);
-        this.saveFavorites();
+    static addFavorite(hero) {
+        HeroProvider.favorites.set(hero.id, hero);
+        HeroProvider.saveFavorites();
     }
 
-    removeFavorite(heroId) {
-        this.favorites.delete(heroId);
-        this.saveFavorites();
+    static removeFavorite(heroId) {
+        HeroProvider.favorites.delete(heroId);
+        HeroProvider.saveFavorites();
     }
 
-    isFavorite(heroId) {
-        return this.favorites.has(heroId);
+    static isFavorite(heroId) {
+        return HeroProvider.favorites.has(heroId);
     }
 
-    getFavoriteHeroes() {
-        return Array.from(this.favorites.values());
+    static getFavoriteHeroes() {
+        return Array.from(HeroProvider.favorites.values());
     }
 
-    toggleFavorite(hero) {
-        if (this.isFavorite(hero.id)) {
-            this.removeFavorite(hero.id);
+    static toggleFavorite(hero) {
+        if (HeroProvider.isFavorite(hero.id)) {
+            HeroProvider.removeFavorite(hero.id);
             return false;
         } else {
-            this.addFavorite(hero);
+            HeroProvider.addFavorite(hero);
             return true;
         }
     }
 
-    addRating(heroId, score, comment = '') {
-        const hero = this.getHeroById(heroId);
+    static addRating(heroId, score, comment = '') {
+        const hero = HeroProvider.getHeroById(heroId);
         if (!hero) return;
 
         const rating = {
@@ -243,17 +219,17 @@ class HeroProvider {
 
         if (!hero.ratings) hero.ratings = [];
         hero.ratings.push(rating);
-        this.updateAverageRating(heroId);
-        this.saveRatings();
+        HeroProvider.updateAverageRating(heroId);
+        HeroProvider.saveRatings();
     }
 
-    getRatings(heroId) {
-        const hero = this.getHeroById(heroId);
+    static getRatings(heroId) {
+        const hero = HeroProvider.getHeroById(heroId);
         return hero ? (hero.ratings || []) : [];
     }
 
-    updateAverageRating(heroId) {
-        const hero = this.getHeroById(heroId);
+    static updateAverageRating(heroId) {
+        const hero = HeroProvider.getHeroById(heroId);
         if (!hero || !hero.ratings || hero.ratings.length === 0) {
             if (hero) hero.averageRating = 0;
             return;
@@ -262,26 +238,26 @@ class HeroProvider {
         hero.averageRating = Math.round(average * 10) / 10;
     }
 
-    saveRatings() {
+    static saveRatings() {
         try {
-            const ratingsData = this.heroes.map(h => ({
+            const ratingsData = HeroProvider.heroes.map(h => ({
                 id: h.id,
                 ratings: h.ratings || [],
                 averageRating: h.averageRating || 0
             }));
-            localStorage.setItem(this.ratingsKey, JSON.stringify(ratingsData));
+            localStorage.setItem(HeroProvider.ratingsKey, JSON.stringify(ratingsData));
         } catch (error) {
             console.error('Erreur sauvegarde notations:', error);
         }
     }
 
-    loadRatings() {
+    static loadRatings() {
         try {
-            const data = localStorage.getItem(this.ratingsKey);
+            const data = localStorage.getItem(HeroProvider.ratingsKey);
             if (!data) return;
             const ratingsData = JSON.parse(data);
             ratingsData.forEach(rd => {
-                const hero = this.getHeroById(rd.id);
+                const hero = HeroProvider.getHeroById(rd.id);
                 if (hero) {
                     hero.ratings = rd.ratings || [];
                     hero.averageRating = rd.averageRating || 0;
@@ -292,14 +268,13 @@ class HeroProvider {
         }
     }
 
-    getFavoriteCount() {
-        return this.favorites.size;
+    static getFavoriteCount() {
+        return HeroProvider.favorites.size;
     }
 
-    clearFavorites() {
-        this.favorites.clear();
-        this.saveFavorites();
+    static clearFavorites() {
+        HeroProvider.favorites.clear();
+        HeroProvider.saveFavorites();
     }
 }
 
-export default new HeroProvider();

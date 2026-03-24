@@ -5,11 +5,11 @@ import HeroProvider from '../../services/HeroProvider.js';
 import Utils from '../../services/Utils.js';
 
 class Favorites {
-    render() {
+    async render() {
         const favorites = HeroProvider.getFavoriteHeroes();
 
         if (favorites.length === 0) {
-            return `
+            const html = `
                 <section class="favorites-section">
                     <h2>Mes Favoris</h2>
                     <div class="message info">
@@ -18,6 +18,13 @@ class Favorites {
                     </div>
                 </section>
             `;
+            setTimeout(() => {
+                const appElement = document.getElementById('app');
+                if (!appElement) return;
+                appElement.innerHTML = html;
+                this.attachFavoriteListeners();
+            }, 0);
+            return html;
         }
 
         let html = `
@@ -62,6 +69,14 @@ class Favorites {
         });
 
         html += '</div></section>';
+
+        setTimeout(() => {
+            const appElement = document.getElementById('app');
+            if (!appElement) return;
+            appElement.innerHTML = html;
+            this.attachFavoriteListeners();
+        }, 0);
+
         return html;
     }
 
@@ -74,9 +89,8 @@ class Favorites {
         return stars;
     }
 
-    attachListeners() {
+    attachFavoriteListeners() {
         const appElement = document.getElementById('app');
-
         appElement.querySelectorAll('.favorite-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();

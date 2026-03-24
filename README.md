@@ -53,17 +53,17 @@ npm run watch
 
 ```
 nexus-database/
-├── index.html                    # SPA unique
-├── data.json                     # Données héros
-├── webpack.config.js             # Configuration bundler
-├── package.json                  # Dépendances
+├── index.html                    
+├── data.json                    
+├── webpack.config.js             
+├── package.json                  
 
 ├── js/
-│   ├── app.js                   # Application principale
-│   ├── config.js                # Configuration
+│   ├── app.js                   
+│   ├── config.js                
 │   ├── services/
-│   │   ├── HeroProvider.js      # Service héros
-│   │   └── Utils.js             # Utilitaires
+│   │   ├── HeroProvider.js     
+│   │   └── Utils.js             
 │   └── views/pages/
 │       ├── Home.js
 │       ├── HeroesList.js
@@ -76,6 +76,5 @@ nexus-database/
 │   └── style.css
 
 └── dist/
-    └── bundle.js                # Bundle généré
-```
+    └── bundle.js               
 
