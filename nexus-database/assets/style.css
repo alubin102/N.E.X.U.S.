@@ -1543,3 +1543,100 @@ footer {
         grid-template-columns: 1fr;
     }
 }
+
+/* ── HERO DETAIL INFO SECTIONS ── */
+
+.hero-info-sections {
+    display: grid;
+    gap: 1.2rem;
+    margin-top: 1.5rem;
+}
+
+.info-section {
+    background-color: rgba(4, 9, 14, 0.78);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    padding: 1rem;
+    border-left: 3px solid var(--accent);
+}
+
+.info-section h2 {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 0.9rem;
+    text-transform: uppercase;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.9rem;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.info-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.info-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.info-value {
+    color: var(--text-main);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.biography-section {
+    border-left-color: #7ccc5a;
+}
+
+.appearance-section {
+    border-left-color: #5adc9e;
+}
+
+.work-section {
+    border-left-color: #d4c24a;
+}
+
+.connections-section {
+    border-left-color: #cc7777;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hero-detail-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .info-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .info-item.full-width {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 480px) {
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .hero-detail-content h1 {
+        font-size: 1.6rem;
+    }
+}

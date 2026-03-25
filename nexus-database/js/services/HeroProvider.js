@@ -13,7 +13,19 @@ export default class HeroProvider {
     static loadFromCache() {
         try {
             const data = localStorage.getItem('hero_cache');
-            return data ? JSON.parse(data) : null;
+            const heroes = data ? JSON.parse(data) : null;
+            
+            // Validate that cached heroes have required properties
+            if (heroes && Array.isArray(heroes) && heroes.length > 0) {
+                const firstHero = heroes[0];
+                // If heroes don't have biography property, clear cache (old format)
+                if (!firstHero.biography) {
+                    localStorage.removeItem('hero_cache');
+                    return null;
+                }
+            }
+            
+            return heroes;
         } catch (e) {
             return null;
         }
@@ -37,7 +49,42 @@ export default class HeroProvider {
         }
 
         HeroProvider.heroes = HeroProvider.mergeHeroes([], apiHeroes || []);
+        
+        // Ensure all heroes have required properties
+        HeroProvider.heroes = HeroProvider.heroes.map(hero => HeroProvider.ensureHeroStructure(hero));
+        
         return HeroProvider.heroes;
+    }
+    
+    static ensureHeroStructure(hero) {
+        // Make sure all heroes have all required properties
+        return {
+            ...hero,
+            biography: hero.biography || {
+                fullName: '-',
+                alterEgos: '-',
+                firstAppearance: '-',
+                placeOfBirth: '-',
+                publisher: '-',
+                alignment: '-'
+            },
+            appearance: hero.appearance || {
+                gender: '-',
+                race: '-',
+                height: '-',
+                weight: '-',
+                eyeColor: '-',
+                hairColor: '-'
+            },
+            work: hero.work || {
+                occupation: '-',
+                base: '-'
+            },
+            connections: hero.connections || {
+                groupAffiliation: '-',
+                relatives: '-'
+            }
+        };
     }
 
     static async fetchAllApiHeroes() {
@@ -65,7 +112,8 @@ export default class HeroProvider {
             const apiHero = await response.json();
             if (!apiHero || apiHero.response !== 'success') return null;
 
-            return HeroProvider.normalizeApiHero(apiHero);
+            const normalizedHero = HeroProvider.normalizeApiHero(apiHero);
+            return HeroProvider.ensureHeroStructure(normalizedHero);
         } catch (error) {
             return null;
         }
@@ -84,6 +132,39 @@ export default class HeroProvider {
             publisher: apiHero.biography?.publisher || 'Inconnu',
             description: descriptionParts.join(' | ') || 'Aucune description disponible',
             image: apiHero.image?.url || '',
+            
+            // Biography details
+            biography: {
+                fullName: apiHero.biography?.['full-name'] || '-',
+                alterEgos: apiHero.biography?.['alter-egos'] || '-',
+                firstAppearance: apiHero.biography?.['first-appearance'] || '-',
+                placeOfBirth: apiHero.biography?.['place-of-birth'] || '-',
+                publisher: apiHero.biography?.publisher || '-',
+                alignment: apiHero.biography?.alignment || '-'
+            },
+            
+            // Appearance details
+            appearance: {
+                gender: apiHero.appearance?.gender || '-',
+                race: apiHero.appearance?.race || '-',
+                height: apiHero.appearance?.height?.[0] || '-',
+                weight: apiHero.appearance?.weight?.[0] || '-',
+                eyeColor: apiHero.appearance?.['eye-color'] || '-',
+                hairColor: apiHero.appearance?.['hair-color'] || '-'
+            },
+            
+            // Work details
+            work: {
+                occupation: apiHero.work?.occupation || '-',
+                base: apiHero.work?.base || '-'
+            },
+            
+            // Connections
+            connections: {
+                groupAffiliation: apiHero.connections?.['group-affiliation'] || '-',
+                relatives: apiHero.connections?.relatives || '-'
+            },
+            
             stats: {
                 intelligence: HeroProvider.toNumber(apiHero.powerstats?.intelligence),
                 strength: HeroProvider.toNumber(apiHero.powerstats?.strength),
