@@ -1,7 +1,6 @@
 import HeroProvider from './services/HeroProvider.js';
 import Utils from './services/Utils.js';
 import CONFIG from './config.js';
-import { showLoader } from './loader.js';
 
 import Home from './views/pages/Home.js';
 import HeroesList from './views/pages/HeroesList.js';
@@ -49,37 +48,7 @@ function attachCardNavigation() {
         if (!heroId) return;
 
 
-        const hero = HeroProvider.getHeroById(heroId);
-        const heroImage = hero?.image || null;
-
-  
-        const profileSequences = [
-            { label: 'ACCÈS PROFIL',          msg: "Récupération du dossier de l'agent classifié...",  duration: 140 },
-            { label: 'BIOMÉTRIE',            msg: 'Scan biométrique et analyse ADN...',                duration: 130 },
-            { label: 'POUVOIRS DÉTECTÉS',    msg: 'Analyse des capacités métahumaines...',            duration: 150 },
-            { label: 'HISTORIQUE',           msg: 'Consultation des archives opérationnelles...',      duration: 120 },
-            { label: 'SYNCHRONISATION',      msg: 'Synchronisation données tactiques...',              duration: 110 },
-            { label: 'PROFIL CHARGÉ',        msg: 'Profil complet disponible - ACCÈS AUTORISÉ.',      duration: 95 },
-        ];
-
-        await showLoader(profileSequences, 'PROFIL AGENT', 0, heroImage);
-
-    
-        const transitionScreen = document.createElement('div');
-        transitionScreen.id = 'transition-screen-loader';
-        transitionScreen.style.cssText = `
-            position: fixed;
-            inset: 0;
-            background: #04090e;
-            z-index: 9999;
-            pointer-events: none;
-        `;
-        document.body.appendChild(transitionScreen);
-
-   
         window.location.hash = `#/hero/${heroId}`;
-        
-       
         setTimeout(router, 50);
     });
 }
