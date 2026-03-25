@@ -1,4 +1,3 @@
-
 const SEQUENCES = [
     { label: 'INIT SYSTÈME',         msg: 'Initialisation des protocoles de sécurité...',  duration: 180 },
     { label: 'AUTH NIVEAU 5',         msg: 'Vérification des accréditations opérateur...',  duration: 160 },
@@ -298,20 +297,6 @@ function buildLoader() {
     return el;
 }
 
-function addLog(text, ok = false) {
-    const log = document.getElementById('nb-log');
-    const cursor = log.querySelector('.nb-cursor');
-    if (cursor) cursor.parentElement.remove();
-
-    const line = document.createElement('div');
-    line.className = 'nb-log-line' + (ok ? ' nb-ok' : '');
-    line.innerHTML = `<span class="nb-log-prefix">&gt;</span><span class="nb-log-text">${text}<span class="nb-cursor"></span></span>`;
-    log.appendChild(line);
-
-    const lines = log.querySelectorAll('.nb-log-line');
-    if (lines.length > 4) lines[0].remove();
-}
-
 function runSequence(el, seqIdx, globalPctStart, resolve) {
     if (seqIdx >= SEQUENCES.length) {
         resolve();
@@ -319,31 +304,22 @@ function runSequence(el, seqIdx, globalPctStart, resolve) {
     }
 
     const seq = SEQUENCES[seqIdx];
-    const globalPctEnd = Math.round(((seqIdx + 1) / SEQUENCES.length) * 100);
-    const isLast = seqIdx === SEQUENCES.length - 1;
-
-    document.getElementById('nb-seq-label').textContent = seq.label;
-    addLog(seq.msg, isLast);
-
-    if (seqIdx === 1) {
-        document.getElementById('nb-proto').textContent = 'ALPHA-7';
-    }
-    if (seqIdx === 3) {
-        document.getElementById('nb-agents').textContent = '1 247';
-        document.getElementById('nb-status').textContent = 'CHARGEMENT';
-        document.getElementById('nb-status').style.color = '#d4c24a';
-    }
-    if (isLast) {
-        document.getElementById('nb-status').textContent = 'OPÉRATIONNEL';
-        document.getElementById('nb-status').style.color = '#5adc9e';
-    }
-
-    let pct = globalPctStart;
-    const steps = 30;
-    const increment = (globalPctEnd - globalPctStart) / steps;
+    const globalPctEnd = 100 * (seqIdx + 1) / SEQUENCES.length;
+    const increment = (globalPctEnd - globalPctStart) / 10;
+    const steps = 8;
     const stepDelay = seq.duration / steps;
 
+    document.getElementById('nb-seq-label').textContent = seq.label;
+    document.getElementById('nb-status').textContent = seq.label;
+
+    const logEl = document.getElementById('nb-log');
+    const logLine = document.createElement('div');
+    logLine.className = 'nb-log-line nb-ok';
+    logLine.innerHTML = `<span class="nb-log-prefix">&gt;</span><span class="nb-log-text">${seq.msg}</span>`;
+    logEl.appendChild(logLine);
+
     let step = 0;
+    let pct = globalPctStart;
     const t = setInterval(() => {
         step++;
         pct = Math.min(globalPctStart + increment * step, globalPctEnd);
@@ -386,39 +362,17 @@ export function showLoader(sequences = SEQUENCES, title = 'N.E.X.U.S.', duration
             <div class="nb-inner">
                 <div class="nb-brand">
                     <div class="nb-title">${title}</div>
-                    <div class="nb-subtitle">${heroImage ? 'Chargement profil...' : 'Chargement en cours...'}</div>
                 </div>
-
-                ${heroImage ? `
-                    <div class="nb-hero-image">
-                        <img src="${heroImage}" alt="Profil" />
-                    </div>
-                ` : ''}
-
+                ${heroImage ? `<div class="nb-hero-image"><img src="${heroImage}" alt=""></div>` : ''}
                 <div class="nb-bar-section">
                     <div class="nb-bar-header">
-                        <span class="nb-seq-label" id="nb-seq-label">${sequences[0]?.label || 'CHARGEMENT'}</span>
+                        <span class="nb-seq-label" id="nb-seq-label">Chargement...</span>
                         <span class="nb-pct" id="nb-pct">0%</span>
                     </div>
                     <div class="nb-bar-wrap">
                         <div class="nb-bar-fill" id="nb-fill"></div>
                         <div class="nb-bar-segments" id="nb-segs"></div>
                     </div>
-                </div>
-
-                <div class="nb-log-section">
-                    <div class="nb-log" id="nb-log">
-                        <div class="nb-log-line">
-                            <span class="nb-log-prefix">&gt;</span>
-                            <span class="nb-log-text">En attente de connexion...<span class="nb-cursor"></span></span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="nb-status-row">
-                    <div class="nb-stat">Protocole<strong id="nb-proto">—</strong></div>
-                    <div class="nb-stat">Agents indexés<strong id="nb-agents">—</strong></div>
-                    <div class="nb-stat">Statut<strong id="nb-status">EN ATTENTE</strong></div>
                 </div>
             </div>
         `;
@@ -432,13 +386,13 @@ export function showLoader(sequences = SEQUENCES, title = 'N.E.X.U.S.', duration
 
         document.body.prepend(el);
 
-        const nextStep = (seqIdx, globalPctStart) => {
+        let seqIdx = 0;
+        const nextStep = (seqIdx, globalPctEnd) => {
             if (seqIdx >= sequences.length) {
                 setTimeout(() => {
                     el.classList.add('nb-done');
                     setTimeout(() => {
                         el.remove();
-                        style.remove();
                         resolve();
                     }, 650);
                 }, 400);
@@ -446,26 +400,15 @@ export function showLoader(sequences = SEQUENCES, title = 'N.E.X.U.S.', duration
             }
 
             const seq = sequences[seqIdx];
-            const globalPctEnd = Math.round(((seqIdx + 1) / sequences.length) * 100);
-            const isLast = seqIdx === sequences.length - 1;
-
-            document.getElementById('nb-seq-label').textContent = seq.label;
-            addLog(seq.msg, isLast);
-
-            if (seqIdx === 1) {
-                document.getElementById('nb-proto').textContent = 'ALPHA-7';
-            }
-            if (seqIdx === sequences.length - 1) {
-                document.getElementById('nb-status').textContent = 'OPÉRATIONNEL';
-                document.getElementById('nb-status').style.color = '#5adc9e';
-            }
-
-            let pct = globalPctStart;
-            const steps = 30;
-            const increment = (globalPctEnd - globalPctStart) / steps;
+            const globalPctStart = 100 * seqIdx / sequences.length;
+            const increment = (globalPctEnd - globalPctStart) / 10;
+            const steps = 8;
             const stepDelay = seq.duration / steps;
 
+            document.getElementById('nb-seq-label').textContent = seq.label;
+
             let step = 0;
+            let pct = globalPctStart;
             const t = setInterval(() => {
                 step++;
                 pct = Math.min(globalPctStart + increment * step, globalPctEnd);

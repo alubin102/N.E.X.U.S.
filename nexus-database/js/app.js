@@ -24,7 +24,6 @@ const routes = {
 let appElement = null;
 let searchInput = null;
 let mainNav = null;
-let currentPage = null;
 let dataLoaded = false;
 
 function initDomReferences() {
@@ -241,7 +240,6 @@ async function router() {
         searchInput.value = '';
     }
 
-    currentPage = pageInstance;
     appElement.innerHTML = await pageInstance.render();
 
 
@@ -258,11 +256,6 @@ window.addEventListener('load', () => {
     initDomReferences();
     setupNavigation();
     setupSearch();
-    router();
-});
-
-
-window.addEventListener('load', () => {
-    initDomReferences();
     attachCardNavigation();
+    router();
 });
