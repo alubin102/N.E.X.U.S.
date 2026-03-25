@@ -228,7 +228,8 @@ async function router() {
     let pageInstance;
     if (PageClass === HeroesList) {
         const pageNum = request.id || 1;
-        pageInstance = new HeroesList(pageNum);
+        const publisher = request.queryParams?.publisher || null;
+        pageInstance = new HeroesList(pageNum, publisher);
     } else if (PageClass === HeroDetail) {
         const heroId = request.id;
         pageInstance = new HeroDetail(heroId);

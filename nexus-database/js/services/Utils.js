@@ -31,9 +31,21 @@ const Utils = {
     },
 
     parseRequestURL() {
-        const url = location.hash.slice(1).toLowerCase() || '/';
-        const [, resource = null, id = null, verb = null] = url.split('/');
-        return { resource, id, verb };
+        const url = location.hash.slice(1) || '/';
+        const [path, queryString] = url.split('?');
+        const [, resource = null, id = null, verb = null] = path.toLowerCase().split('/');
+        
+        const queryParams = {};
+        if (queryString) {
+            queryString.split('&').forEach(param => {
+                const [key, value] = param.split('=');
+                if (key) {
+                    queryParams[decodeURIComponent(key)] = value ? decodeURIComponent(value) : '';
+                }
+            });
+        }
+        
+        return { resource, id, verb, queryParams };
     }
 };
 
