@@ -59,7 +59,19 @@ class HeroProvider {
     static loadFromCache() {
         try {
             const data = localStorage.getItem('hero_cache');
-            return data ? JSON.parse(data) : null;
+            const heroes = data ? JSON.parse(data) : null;
+            
+            // Validate that cached heroes have required properties
+            if (heroes && Array.isArray(heroes) && heroes.length > 0) {
+                const firstHero = heroes[0];
+                // If heroes don't have biography property, clear cache (old format)
+                if (!firstHero.biography) {
+                    localStorage.removeItem('hero_cache');
+                    return null;
+                }
+            }
+            
+            return heroes;
         } catch (e) {
             return null;
         }
@@ -83,7 +95,42 @@ class HeroProvider {
         }
 
         HeroProvider.heroes = HeroProvider.mergeHeroes([], apiHeroes || []);
+        
+        // Ensure all heroes have required properties
+        HeroProvider.heroes = HeroProvider.heroes.map(hero => HeroProvider.ensureHeroStructure(hero));
+        
         return HeroProvider.heroes;
+    }
+    
+    static ensureHeroStructure(hero) {
+        // Make sure all heroes have all required properties
+        return {
+            ...hero,
+            biography: hero.biography || {
+                fullName: '-',
+                alterEgos: '-',
+                firstAppearance: '-',
+                placeOfBirth: '-',
+                publisher: '-',
+                alignment: '-'
+            },
+            appearance: hero.appearance || {
+                gender: '-',
+                race: '-',
+                height: '-',
+                weight: '-',
+                eyeColor: '-',
+                hairColor: '-'
+            },
+            work: hero.work || {
+                occupation: '-',
+                base: '-'
+            },
+            connections: hero.connections || {
+                groupAffiliation: '-',
+                relatives: '-'
+            }
+        };
     }
 
     static async fetchAllApiHeroes() {
@@ -111,7 +158,8 @@ class HeroProvider {
             const apiHero = await response.json();
             if (!apiHero || apiHero.response !== 'success') return null;
 
-            return HeroProvider.normalizeApiHero(apiHero);
+            const normalizedHero = HeroProvider.normalizeApiHero(apiHero);
+            return HeroProvider.ensureHeroStructure(normalizedHero);
         } catch (error) {
             return null;
         }
@@ -1217,10 +1265,37 @@ class HeroesList {
 class HeroDetail {
     constructor(heroId) {
         this.heroId = parseInt(heroId);
+        this.hero = null;
+    }
+
+    async loadHeroData() {
+        // First try to get from cache
         this.hero = HeroProvider.getHeroById(this.heroId);
+        
+        // If not found, fetch directly from API
+        if (!this.hero) {
+            this.hero = await HeroProvider.fetchHeroById(this.heroId);
+            // Add to cache if found
+            if (this.hero) {
+                HeroProvider.heroes.push(this.hero);
+            }
+        }
+        
+        // Load ratings for this hero
+        if (this.hero) {
+            const ratings = HeroProvider.getRatings(this.hero.id) || [];
+            this.hero.averageRating = ratings.length > 0 
+                ? ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length 
+                : 0;
+        }
+        
+        return this.hero;
     }
 
     async render() {
+        // Ensure hero data is loaded
+        await this.loadHeroData();
+        
         if (!this.hero) {
             const html = `
                 <div class="message error">
@@ -1460,27 +1535,27 @@ class HeroDetail {
                 <div class="info-grid">
                     <div class="info-item">
                         <span class="info-label">Nom complet:</span>
-                        <span class="info-value">${services_Utils.escapeHtml(biography.fullName)}</span>
+                        <span class="info-value">${services_Utils.escapeHtml(biography.fullName || '-')}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Alter-ego:</span>
-                        <span class="info-value">${services_Utils.escapeHtml(biography.alterEgos)}</span>
+                        <span class="info-value">${services_Utils.escapeHtml(biography.alterEgos || '-')}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Première apparition:</span>
-                        <span class="info-value">${services_Utils.escapeHtml(biography.firstAppearance)}</span>
+                        <span class="info-value">${services_Utils.escapeHtml(biography.firstAppearance || '-')}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Lieu de naissance:</span>
-                        <span class="info-value">${services_Utils.escapeHtml(biography.placeOfBirth)}</span>
+                        <span class="info-value">${services_Utils.escapeHtml(biography.placeOfBirth || '-')}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Éditeur:</span>
-                        <span class="info-value">${services_Utils.escapeHtml(biography.publisher)}</span>
+                        <span class="info-value">${services_Utils.escapeHtml(biography.publisher || '-')}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Alignement:</span>
-                        <span class="info-value">${services_Utils.escapeHtml(biography.alignment)}</span>
+                        <span class="info-value">${services_Utils.escapeHtml(biography.alignment || '-')}</span>
                     </div>
                 </div>
             </div>
@@ -1494,27 +1569,27 @@ class HeroDetail {
                 <div class="info-grid">
                     <div class="info-item">
                         <span class="info-label">Genre:</span>
-                        <span class="info-value">${services_Utils.escapeHtml(appearance.gender)}</span>
+                        <span class="info-value">${services_Utils.escapeHtml(appearance.gender || '-')}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Race:</span>
-                        <span class="info-value">${services_Utils.escapeHtml(appearance.race)}</span>
+                        <span class="info-value">${services_Utils.escapeHtml(appearance.race || '-')}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Couleur des yeux:</span>
-                        <span class="info-value">${services_Utils.escapeHtml(appearance.eyeColor)}</span>
+                        <span class="info-value">${services_Utils.escapeHtml(appearance.eyeColor || '-')}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Couleur des cheveux:</span>
-                        <span class="info-value">${services_Utils.escapeHtml(appearance.hairColor)}</span>
+                        <span class="info-value">${services_Utils.escapeHtml(appearance.hairColor || '-')}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Hauteur:</span>
-                        <span class="info-value">${services_Utils.escapeHtml(appearance.height)}</span>
+                        <span class="info-value">${services_Utils.escapeHtml(appearance.height || '-')}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Poids:</span>
-                        <span class="info-value">${services_Utils.escapeHtml(appearance.weight)}</span>
+                        <span class="info-value">${services_Utils.escapeHtml(appearance.weight || '-')}</span>
                     </div>
                 </div>
             </div>
@@ -1528,11 +1603,11 @@ class HeroDetail {
                 <div class="info-grid">
                     <div class="info-item full-width">
                         <span class="info-label">Occupation:</span>
-                        <span class="info-value">${services_Utils.escapeHtml(work.occupation)}</span>
+                        <span class="info-value">${services_Utils.escapeHtml(work.occupation || '-')}</span>
                     </div>
                     <div class="info-item full-width">
                         <span class="info-label">Base:</span>
-                        <span class="info-value">${services_Utils.escapeHtml(work.base)}</span>
+                        <span class="info-value">${services_Utils.escapeHtml(work.base || '-')}</span>
                     </div>
                 </div>
             </div>
@@ -1546,11 +1621,11 @@ class HeroDetail {
                 <div class="info-grid">
                     <div class="info-item full-width">
                         <span class="info-label">Groupe d'affiliation:</span>
-                        <span class="info-value">${services_Utils.escapeHtml(connections.groupAffiliation)}</span>
+                        <span class="info-value">${services_Utils.escapeHtml(connections.groupAffiliation || '-')}</span>
                     </div>
                     <div class="info-item full-width">
                         <span class="info-label">Proches:</span>
-                        <span class="info-value">${services_Utils.escapeHtml(connections.relatives)}</span>
+                        <span class="info-value">${services_Utils.escapeHtml(connections.relatives || '-')}</span>
                     </div>
                 </div>
             </div>
