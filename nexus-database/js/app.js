@@ -2,16 +2,14 @@ import HeroProvider from './services/HeroProvider.js';
 import Utils from './services/Utils.js';
 import CONFIG from './config.js';
 import { showLoader } from './loader.js';
-// Importer les pages
+
 import Home from './views/pages/Home.js';
 import HeroesList from './views/pages/HeroesList.js';
 import HeroDetail from './views/pages/HeroDetail.js';
 import Favorites from './views/pages/Favorites.js';
 import Error404 from './views/pages/Error404.js';
 
-// ---------------------------------------
-// Configuration des routes (hash router)
-// ---------------------------------------
+
 
 const routes = {
     '/': Home,
@@ -22,9 +20,7 @@ const routes = {
     '/favorites': Favorites
 };
 
-// ---------------------------------------
-// État et éléments globaux
-// ---------------------------------------
+
 
 let appElement = null;
 let searchInput = null;
@@ -39,11 +35,11 @@ function initDomReferences() {
     mainNav = document.getElementById('main-nav');
 }
 
-// Gestionnaire délégué : clic sur une card ouvre la page détail (sans interférer avec le bouton favoris)
+
 function attachCardNavigation() {
     if (!appElement) return;
     appElement.addEventListener('click', async (e) => {
-        // Ignorer si on clique sur le bouton favoris
+ 
         if (e.target.closest('.favorite-btn')) return;
 
         const card = e.target.closest('.hero-card');
@@ -52,11 +48,11 @@ function attachCardNavigation() {
         const heroId = card.dataset.heroId || card.getAttribute('data-hero-id');
         if (!heroId) return;
 
-        // Récupérer l'image du héros
+
         const hero = HeroProvider.getHeroById(heroId);
         const heroImage = hero?.image || null;
 
-        // Afficher le loader de profil avant de naviguer
+  
         const profileSequences = [
             { label: 'ACCÈS PROFIL',          msg: "Récupération du dossier de l'agent classifié...",  duration: 140 },
             { label: 'BIOMÉTRIE',            msg: 'Scan biométrique et analyse ADN...',                duration: 130 },
@@ -68,7 +64,7 @@ function attachCardNavigation() {
 
         await showLoader(profileSequences, 'PROFIL AGENT', 0, heroImage);
 
-        // Créer un écran de transition noir pour bloquer la vue pendant le changement de page
+    
         const transitionScreen = document.createElement('div');
         transitionScreen.id = 'transition-screen-loader';
         transitionScreen.style.cssText = `
@@ -80,10 +76,10 @@ function attachCardNavigation() {
         `;
         document.body.appendChild(transitionScreen);
 
-        // Naviguer vers la page détail
+   
         window.location.hash = `#/hero/${heroId}`;
         
-        // Forcer le router immédiatement pour éviter le délai
+       
         setTimeout(router, 50);
     });
 }
@@ -91,18 +87,15 @@ function attachCardNavigation() {
 async function ensureDataLoaded() {
     if (dataLoaded) return;
 
-    console.log(`🦸 ${CONFIG.app.name} v${CONFIG.app.version}`);
+    console.log(` ${CONFIG.app.name} v${CONFIG.app.version}`);
 
     const heroes = await HeroProvider.loadHeroes();
     HeroProvider.loadRatings();
     dataLoaded = true;
 
-    console.log(`✅ ${heroes.length} super-héros chargés`);
+    console.log(` ${heroes.length} super-héros chargés`);
 }
 
-// ---------------------------------------
-// Navigation
-// ---------------------------------------
 
 function navigate(path) {
     if (!path.startsWith('/')) path = '/' + path;
@@ -137,9 +130,7 @@ function setupNavigation() {
     });
 }
 
-// ---------------------------------------
-// Recherche
-// ---------------------------------------
+
 
 function performSearch(query) {
     const results = HeroProvider.searchHeroes(query);
@@ -244,9 +235,6 @@ function setupSearch() {
     });
 }
 
-// ---------------------------------------
-// Router principal
-// ---------------------------------------
 
 async function router() {
     initDomReferences();
@@ -256,7 +244,7 @@ async function router() {
 
     const request = Utils.parseRequestURL();
 
-    // Construire une clé de route à partir de l'URL parsée
+
     let routeKey;
     if (!request.resource) {
         routeKey = '/';
@@ -287,16 +275,14 @@ async function router() {
     currentPage = pageInstance;
     appElement.innerHTML = await pageInstance.render();
 
-    // Retirer l'écran de transition après que la page soit rendue
+
     const transitionScreen = document.getElementById('transition-screen-loader');
     if (transitionScreen) {
         transitionScreen.remove();
     }
 }
 
-// ---------------------------------------
-// Écouteurs globaux
-// ---------------------------------------
+
 
 window.addEventListener('hashchange', router);
 window.addEventListener('load', () => {
@@ -306,7 +292,7 @@ window.addEventListener('load', () => {
     router();
 });
 
-// Attacher la navigation par clic sur les cards (délégué)
+
 window.addEventListener('load', () => {
     initDomReferences();
     attachCardNavigation();

@@ -11,7 +11,7 @@ class HeroDetail {
         if (!this.hero) {
             const html = `
                 <div class="message error">
-                    ⚠️ Super-héro non trouvé
+                    Super-héro non trouvé
                 </div>
             `;
             setTimeout(() => {

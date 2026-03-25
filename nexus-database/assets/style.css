@@ -30,7 +30,7 @@ body {
     min-height: 100%;
 }
 
-/* Scanlines overlay */
+
 body::before {
     content: '';
     position: fixed;
@@ -61,7 +61,7 @@ a {
     text-decoration: none;
 }
 
-/* ── Header ── */
+
 
 .site-header {
     position: sticky;
@@ -159,7 +159,7 @@ a {
     box-shadow: 0 0 0 3px rgba(124, 204, 90, 0.12), var(--glow);
 }
 
-/* ── Main layout ── */
+
 
 main {
     width: min(1250px, 100% - 2.4rem);
@@ -192,7 +192,7 @@ section {
     animation: pulse-dot 1.1s infinite;
 }
 
-/* ── Home ── */
+
 
 .home-section {
     display: grid;
@@ -210,7 +210,7 @@ section {
     overflow: hidden;
 }
 
-/* corner bracket decoration */
+
 .home-hero::before {
     content: '';
     position: absolute;
@@ -334,7 +334,6 @@ section {
     gap: 0.8rem;
 }
 
-/* ── Buttons ── */
 
 .btn,
 .details-btn,
@@ -404,7 +403,7 @@ section {
     transform: translateY(-1px);
 }
 
-/* ── Lists and filters ── */
+
 
 .section-header {
     display: flex;
@@ -426,7 +425,7 @@ section {
     color: var(--text-main);
 }
 
-/* prefix bar on section titles */
+
 .section-header h2::before,
 .favorites-section h2::before,
 .about-container h2::before {
@@ -468,7 +467,7 @@ section {
     gap: 1rem;
 }
 
-/* ── Hero cards ── */
+
 
 .hero-card {
     border-radius: 2px;
@@ -495,7 +494,6 @@ section {
     min-height: 290px;
 }
 
-/* scan line on hover over image */
 .hero-card-image::after {
     content: '';
     position: absolute;
@@ -574,7 +572,6 @@ section {
     letter-spacing: 0.02em;
 }
 
-/* ── Favorite button ── */
 
 .favorite-btn {
     position: absolute;
@@ -620,7 +617,6 @@ section {
     text-transform: uppercase;
 }
 
-/* ── Pagination ── */
 
 .pagination {
     margin-top: 1.4rem;
@@ -638,7 +634,6 @@ section {
     font-size: 0.78rem;
 }
 
-/* ── Hero detail ── */
 
 .hero-detail-header {
     margin-bottom: 0.9rem;
@@ -750,7 +745,6 @@ section {
     letter-spacing: 0.04em;
 }
 
-/* ── Rating section ── */
 
 .rating-summary {
     margin: 0.7rem 0;
@@ -840,7 +834,6 @@ section {
     font-size: 0.86rem;
 }
 
-/* ── About + 404 + messages ── */
 
 .about-content {
     display: grid;

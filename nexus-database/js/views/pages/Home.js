@@ -1,6 +1,4 @@
-/**
- * Page d'accueil - Terminal Opérationnel N.E.X.U.S.
- */
+
 import HeroProvider from '../../services/HeroProvider.js';
 
 class Home {

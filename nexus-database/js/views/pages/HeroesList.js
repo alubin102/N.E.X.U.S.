@@ -34,7 +34,7 @@ class HeroesList {
                         </div>
                     </div>
                     <div class="message info">
-                        📭 Aucun super-héro trouvé
+                        Aucun super-héro trouvé
                     </div>
                 </section>
             `;

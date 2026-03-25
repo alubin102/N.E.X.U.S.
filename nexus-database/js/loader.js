@@ -1,8 +1,3 @@
-/**
- * NEXUS — Boot Loader
- * Affiche un écran de démarrage plein écran au premier chargement.
- * Usage : <script type="module" src="js/loader.js"></script> dans <head>
- */
 
 const SEQUENCES = [
     { label: 'INIT SYSTÈME',         msg: 'Initialisation des protocoles de sécurité...',  duration: 180 },
@@ -379,7 +374,6 @@ function runLoader() {
     });
 }
 
-// Fonction générique pour afficher un loader avec des séquences personnalisées
 export function showLoader(sequences = SEQUENCES, title = 'N.E.X.U.S.', duration = 0, heroImage = null) {
     return new Promise(resolve => {
         const style = document.createElement('style');
@@ -429,7 +423,6 @@ export function showLoader(sequences = SEQUENCES, title = 'N.E.X.U.S.', duration
             </div>
         `;
 
-        // Build bar segments
         const segsEl = el.querySelector('#nb-segs');
         sequences.forEach(() => {
             const s = document.createElement('div');
@@ -492,7 +485,6 @@ export function showLoader(sequences = SEQUENCES, title = 'N.E.X.U.S.', duration
     });
 }
 
-// Bloque le scroll pendant le chargement
 document.documentElement.style.overflow = 'hidden';
 
 runLoader().then(() => {
