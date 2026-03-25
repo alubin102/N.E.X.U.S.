@@ -3,11 +3,9 @@ import CONFIG from '../config.js';
 export default class HeroProvider {
     static apiKey = CONFIG.api.apiKey;
     static baseUrl = CONFIG.api.baseUrl;
-    static cache = new Map();
     static heroes = [];
-    static ratings = [];
-    static favoritesKey = 'hero_favorites';
     static ratingsKey = 'hero_ratings';
+    static favoritesKey = 'hero_favorites';
     static favorites = HeroProvider.loadFavorites();
 
     static loadFromCache() {

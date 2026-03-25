@@ -17,24 +17,12 @@ const CONFIG = {
         ratings: 'hero_ratings',
         theme: 'app_theme'
     },
-    
-    cache: {
-    },
 
     ui: {
         pageSize: 9,
         debounceSearchDelay: 500,
         ratingMaxLength: 200
-    },
-
-    routes: [
-        { path: '/', page: 'Home' },
-        { path: '/heroes', page: 'HeroesList' },
-        { path: '/heroes/:page', page: 'HeroesList' },
-        { path: '/hero/:id', page: 'HeroDetail' },
-        { path: '/favorites', page: 'Favorites' },
-        { path: '*', page: 'Error404' }
-    ]
+    }
 };
 
 export default CONFIG;
