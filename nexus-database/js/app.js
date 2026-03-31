@@ -1,6 +1,7 @@
 import HeroProvider from './services/HeroProvider.js';
 import Utils from './services/Utils.js';
 import CONFIG from './config.js';
+import imageLoader from './services/ImageLoader.js';
 
 import Home from './views/pages/Home.js';
 import HeroesList from './views/pages/HeroesList.js';
@@ -141,6 +142,8 @@ function displaySearchResults(results, query) {
                     <img 
                         src="${hero.image || 'https://via.placeholder.com/300x400?text=No+Image'}"
                         alt="${hero.name}"
+                        class="lazy-load"
+                        data-src="${hero.image || 'https://via.placeholder.com/300x400?text=No+Image'}"
                         loading="lazy"
                     >
                     <button class="favorite-btn ${isFav ? 'active' : ''}" 
@@ -165,6 +168,12 @@ function displaySearchResults(results, query) {
 
     html += '</div></section>';
     appElement.innerHTML = html;
+
+    // Initialiser le lazy loading pour les images de recherche
+    if ('IntersectionObserver' in window) {
+        imageLoader.reload();
+        imageLoader.observeAll(appElement);
+    }
 
     attachSearchListeners();
 }
