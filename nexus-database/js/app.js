@@ -242,12 +242,6 @@ async function router() {
     }
 
     appElement.innerHTML = await pageInstance.render();
-
-
-    const transitionScreen = document.getElementById('transition-screen-loader');
-    if (transitionScreen) {
-        transitionScreen.remove();
-    }
 }
 
 

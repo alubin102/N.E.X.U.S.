@@ -82,10 +82,6 @@ class HeroDetail {
                         <h1>${Utils.escapeHtml(this.hero.name)}</h1>
                         <p class="hero-alias">Alias: ${Utils.escapeHtml(this.hero.alias)}</p>
                         <p class="hero-publisher">Éditeur: ${Utils.escapeHtml(this.hero.publisher)}</p>
-                        
-                        <div class="hero-description">
-                            ${Utils.escapeHtml(this.hero.description)}
-                        </div>
 
                         <div class="hero-stats">
                             <h2>Statistiques de Puissance</h2>
@@ -105,7 +101,7 @@ class HeroDetail {
                             ${avgRating > 0 ? `
                                 <div class="rating-summary">
                                     <div class="average-rating">
-                                        <span class="stars-big">${this.renderStarsBig(avgRating)}</span>
+                                        <span class="stars-big">${this.renderStars(avgRating)}</span>
                                         <span class="rating-number">${avgRating.toFixed(1)}/5</span>
                                     </div>
                                 </div>
@@ -185,21 +181,6 @@ class HeroDetail {
                         b.classList.toggle('active', idx < selectedRating);
                     });
                 });
-
-                btn.addEventListener('mouseenter', () => {
-                    const value = parseInt(btn.dataset.value);
-                    starBtns.forEach((b, idx) => {
-                        b.style.color = idx < value ? '#FFD700' : '#999';
-                    });
-                });
-            });
-
-            appElement.querySelectorAll('.rating-stars').forEach(container => {
-                container.addEventListener('mouseleave', () => {
-                    starBtns.forEach((b, idx) => {
-                        b.style.color = idx < selectedRating ? '#FFD700' : '#999';
-                    });
-                });
             });
 
             const submitBtn = appElement.querySelector('#submit-rating');
@@ -261,10 +242,6 @@ class HeroDetail {
         if (hasHalf) stars += '½';
         stars += '☆'.repeat(5 - Math.ceil(rating));
         return stars;
-    }
-
-    renderStarsBig(rating) {
-        return this.renderStars(rating);
     }
 
     renderBiographySection(biography) {

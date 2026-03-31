@@ -21,24 +21,12 @@ const CONFIG = {
         ratings: 'hero_ratings',
         theme: 'app_theme'
     },
-    
-    cache: {
-    },
 
     ui: {
         pageSize: 9,
         debounceSearchDelay: 500,
         ratingMaxLength: 200
-    },
-
-    routes: [
-        { path: '/', page: 'Home' },
-        { path: '/heroes', page: 'HeroesList' },
-        { path: '/heroes/:page', page: 'HeroesList' },
-        { path: '/hero/:id', page: 'HeroDetail' },
-        { path: '/favorites', page: 'Favorites' },
-        { path: '*', page: 'Error404' }
-    ]
+    }
 };
 
 /* harmony default export */ const config = (CONFIG);
@@ -49,11 +37,9 @@ const CONFIG = {
 class HeroProvider {
     static apiKey = config.api.apiKey;
     static baseUrl = config.api.baseUrl;
-    static cache = new Map();
     static heroes = [];
-    static ratings = [];
-    static favoritesKey = 'hero_favorites';
     static ratingsKey = 'hero_ratings';
+    static favoritesKey = 'hero_favorites';
     static favorites = HeroProvider.loadFavorites();
 
     static loadFromCache() {
@@ -94,43 +80,8 @@ class HeroProvider {
             }
         }
 
-        HeroProvider.heroes = HeroProvider.mergeHeroes([], apiHeroes || []);
-        
-        // Ensure all heroes have required properties
-        HeroProvider.heroes = HeroProvider.heroes.map(hero => HeroProvider.ensureHeroStructure(hero));
-        
+        HeroProvider.heroes = apiHeroes || [];
         return HeroProvider.heroes;
-    }
-    
-    static ensureHeroStructure(hero) {
-        // Make sure all heroes have all required properties
-        return {
-            ...hero,
-            biography: hero.biography || {
-                fullName: '-',
-                alterEgos: '-',
-                firstAppearance: '-',
-                placeOfBirth: '-',
-                publisher: '-',
-                alignment: '-'
-            },
-            appearance: hero.appearance || {
-                gender: '-',
-                race: '-',
-                height: '-',
-                weight: '-',
-                eyeColor: '-',
-                hairColor: '-'
-            },
-            work: hero.work || {
-                occupation: '-',
-                base: '-'
-            },
-            connections: hero.connections || {
-                groupAffiliation: '-',
-                relatives: '-'
-            }
-        };
     }
 
     static async fetchAllApiHeroes() {
@@ -158,107 +109,55 @@ class HeroProvider {
             const apiHero = await response.json();
             if (!apiHero || apiHero.response !== 'success') return null;
 
-            const normalizedHero = HeroProvider.normalizeApiHero(apiHero);
-            return HeroProvider.ensureHeroStructure(normalizedHero);
+            return {
+                id: parseInt(apiHero.id),
+                name: apiHero.name || 'Inconnu',
+                alias: apiHero.biography?.['full-name'] || apiHero.name || 'Inconnu',
+                publisher: apiHero.biography?.publisher || 'Inconnu',
+                image: apiHero.image?.url || '',
+                biography: {
+                    fullName: apiHero.biography?.['full-name'] || '-',
+                    alterEgos: apiHero.biography?.['alter-egos'] || '-',
+                    firstAppearance: apiHero.biography?.['first-appearance'] || '-',
+                    placeOfBirth: apiHero.biography?.['place-of-birth'] || '-',
+                    publisher: apiHero.biography?.publisher || '-',
+                    alignment: apiHero.biography?.alignment || '-'
+                },
+                appearance: {
+                    gender: apiHero.appearance?.gender || '-',
+                    race: apiHero.appearance?.race || '-',
+                    height: apiHero.appearance?.height?.[0] || '-',
+                    weight: apiHero.appearance?.weight?.[0] || '-',
+                    eyeColor: apiHero.appearance?.['eye-color'] || '-',
+                    hairColor: apiHero.appearance?.['hair-color'] || '-'
+                },
+                work: {
+                    occupation: apiHero.work?.occupation || '-',
+                    base: apiHero.work?.base || '-'
+                },
+                connections: {
+                    groupAffiliation: apiHero.connections?.['group-affiliation'] || '-',
+                    relatives: apiHero.connections?.relatives || '-'
+                },
+                stats: {
+                    intelligence: HeroProvider.toNumber(apiHero.powerstats?.intelligence),
+                    strength: HeroProvider.toNumber(apiHero.powerstats?.strength),
+                    speed: HeroProvider.toNumber(apiHero.powerstats?.speed),
+                    durability: HeroProvider.toNumber(apiHero.powerstats?.durability),
+                    power: HeroProvider.toNumber(apiHero.powerstats?.power),
+                    combat: HeroProvider.toNumber(apiHero.powerstats?.combat)
+                },
+                ratings: [],
+                averageRating: 0
+            };
         } catch (error) {
             return null;
         }
     }
 
-    static normalizeApiHero(apiHero) {
-        const fullName = apiHero.biography?.['full-name'] || '';
-        const occupation = apiHero.work?.occupation || '';
-        const placeOfBirth = apiHero.biography?.['place-of-birth'] || '';
-        const descriptionParts = [occupation, placeOfBirth].filter(Boolean);
-
-        return {
-            id: parseInt(apiHero.id),
-            name: apiHero.name || 'Inconnu',
-            alias: fullName || apiHero.name || 'Inconnu',
-            publisher: apiHero.biography?.publisher || 'Inconnu',
-            description: descriptionParts.join(' | ') || 'Aucune description disponible',
-            image: apiHero.image?.url || '',
-            
-            // Biography details
-            biography: {
-                fullName: apiHero.biography?.['full-name'] || '-',
-                alterEgos: apiHero.biography?.['alter-egos'] || '-',
-                firstAppearance: apiHero.biography?.['first-appearance'] || '-',
-                placeOfBirth: apiHero.biography?.['place-of-birth'] || '-',
-                publisher: apiHero.biography?.publisher || '-',
-                alignment: apiHero.biography?.alignment || '-'
-            },
-            
-            // Appearance details
-            appearance: {
-                gender: apiHero.appearance?.gender || '-',
-                race: apiHero.appearance?.race || '-',
-                height: apiHero.appearance?.height?.[0] || '-',
-                weight: apiHero.appearance?.weight?.[0] || '-',
-                eyeColor: apiHero.appearance?.['eye-color'] || '-',
-                hairColor: apiHero.appearance?.['hair-color'] || '-'
-            },
-            
-            // Work details
-            work: {
-                occupation: apiHero.work?.occupation || '-',
-                base: apiHero.work?.base || '-'
-            },
-            
-            // Connections
-            connections: {
-                groupAffiliation: apiHero.connections?.['group-affiliation'] || '-',
-                relatives: apiHero.connections?.relatives || '-'
-            },
-            
-            stats: {
-                intelligence: HeroProvider.toNumber(apiHero.powerstats?.intelligence),
-                strength: HeroProvider.toNumber(apiHero.powerstats?.strength),
-                speed: HeroProvider.toNumber(apiHero.powerstats?.speed),
-                durability: HeroProvider.toNumber(apiHero.powerstats?.durability),
-                power: HeroProvider.toNumber(apiHero.powerstats?.power),
-                combat: HeroProvider.toNumber(apiHero.powerstats?.combat)
-            },
-            ratings: [],
-            averageRating: 0
-        };
-    }
-
     static toNumber(value) {
         const n = parseInt(value, 10);
         return Number.isNaN(n) ? 0 : n;
-    }
-
-    static mergeHeroes(localHeroes, apiHeroes) {
-        const merged = new Map();
-
-        localHeroes.forEach(hero => {
-            merged.set(hero.id, hero);
-        });
-
-        apiHeroes.forEach(hero => {
-            if (!merged.has(hero.id)) {
-                merged.set(hero.id, hero);
-                return;
-            }
-
-            const existing = merged.get(hero.id);
-            merged.set(hero.id, {
-                ...hero,
-                ...existing,
-                name: existing.name || hero.name,
-                alias: existing.alias || hero.alias,
-                publisher: existing.publisher || hero.publisher,
-                description: existing.description || hero.description,
-                image: existing.image || hero.image,
-                stats: {
-                    ...hero.stats,
-                    ...(existing.stats || {})
-                }
-            });
-        });
-
-        return Array.from(merged.values());
     }
 
     static getAllHeroes() {
@@ -440,517 +339,32 @@ const Utils = {
     },
 
     parseRequestURL() {
-        const url = location.hash.slice(1).toLowerCase() || '/';
-        const [, resource = null, id = null, verb = null] = url.split('/');
-        return { resource, id, verb };
+        const url = location.hash.slice(1) || '/';
+        const [path, queryString] = url.split('?');
+        const [, resource = null, id = null, verb = null] = path.toLowerCase().split('/');
+        
+        const queryParams = {};
+        if (queryString) {
+            queryString.split('&').forEach(param => {
+                const [key, value] = param.split('=');
+                if (key) {
+                    queryParams[decodeURIComponent(key)] = value ? decodeURIComponent(value) : '';
+                }
+            });
+        }
+        
+        return { resource, id, verb, queryParams };
     }
 };
 
 /* harmony default export */ const services_Utils = (Utils);
 
-;// ./js/loader.js
-
-const SEQUENCES = [
-    { label: 'INIT SYSTÈME',         msg: 'Initialisation des protocoles de sécurité...',  duration: 180 },
-    { label: 'AUTH NIVEAU 5',         msg: 'Vérification des accréditations opérateur...',  duration: 160 },
-    { label: 'ACCÈS BASE DE DONNÉES', msg: 'Connexion aux serveurs NEXUS — chiffrement AES-256...', duration: 200 },
-    { label: 'CHARGEMENT AGENTS',     msg: 'Récupération des dossiers classifiés (1 247 entrées)...', duration: 240 },
-    { label: 'DÉCHIFFREMENT',         msg: 'Déchiffrement des profils biométriques...', duration: 190 },
-    { label: 'SYNCHRONISATION',       msg: 'Synchronisation index opérationnel...', duration: 160 },
-    { label: 'CALIBRATION',           msg: 'Calibrage des capteurs — validation intégrité données...', duration: 140 },
-    { label: 'SYSTÈME EN LIGNE',      msg: 'NEXUS opérationnel — accès autorisé.', duration: 80 },
-];
-
-const CSS = `
-#nexus-boot {
-    position: fixed;
-    inset: 0;
-    z-index: 9998;
-    background: #04090e;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0;
-    font-family: 'Space Grotesk', 'Trebuchet MS', monospace;
-}
-
-#nexus-boot::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 1;
-    background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 3px,
-        rgba(0,0,0,0.12) 3px,
-        rgba(0,0,0,0.12) 4px
-    );
-}
-
-.nb-inner {
-    position: relative;
-    z-index: 2;
-    width: min(520px, 88vw);
-    display: flex;
-    flex-direction: column;
-    gap: 1.8rem;
-}
-
-.nb-brand {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.nb-title {
-    font-family: 'Bebas Neue', Impact, sans-serif;
-    font-size: clamp(2.8rem, 7vw, 4rem);
-    letter-spacing: 0.32em;
-    color: #7ccc5a;
-    line-height: 1;
-    text-shadow: 0 0 28px rgba(124,204,90,0.45);
-}
-
-.nb-subtitle {
-    font-size: 0.68rem;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: #4a7a48;
-}
-
-.nb-hero-image {
-    width: 180px;
-    height: 240px;
-    margin: 0 auto;
-    border: 2px solid rgba(124,204,90,0.4);
-    overflow: hidden;
-    background: rgba(124,204,90,0.05);
-    position: relative;
-    box-shadow: 0 0 16px rgba(124,204,90,0.2), inset 0 0 16px rgba(124,204,90,0.1);
-}
-
-.nb-hero-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0.9;
-}
-
-.nb-bar-section {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.nb-bar-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.nb-seq-label {
-    font-size: 0.7rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: #7ccc5a;
-    font-weight: 700;
-}
-
-.nb-pct {
-    font-size: 0.78rem;
-    letter-spacing: 0.08em;
-    font-weight: 700;
-    color: #7ccc5a;
-}
-
-.nb-bar-wrap {
-    width: 100%;
-    height: 16px;
-    background: rgba(124,204,90,0.07);
-    border: 1px solid rgba(124,204,90,0.28);
-    overflow: hidden;
-    position: relative;
-}
-
-.nb-bar-fill {
-    height: 100%;
-    width: 0%;
-    background: repeating-linear-gradient(
-        60deg,
-        #4a9632 0, #4a9632 9px,
-        #3a7828 9px, #3a7828 18px
-    );
-    transition: width 0.08s linear;
-    position: relative;
-}
-
-.nb-bar-fill::after {
-    content: '';
-    position: absolute;
-    top: 0; right: 0;
-    width: 6px; height: 100%;
-    background: #9de87a;
-    opacity: 0.8;
-    box-shadow: 0 0 8px #7ccc5a;
-}
-
-.nb-bar-segments {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    pointer-events: none;
-}
-
-.nb-seg {
-    flex: 1;
-    border-right: 1px solid rgba(4,9,14,0.5);
-}
-
-.nb-log-section {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.nb-log {
-    font-size: 0.72rem;
-    letter-spacing: 0.05em;
-    color: #4a7a48;
-    min-height: 4.5em;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    gap: 3px;
-}
-
-.nb-log-line {
-    display: flex;
-    gap: 6px;
-    animation: nb-fadein 0.2s ease both;
-}
-
-.nb-log-prefix {
-    color: rgba(124,204,90,0.4);
-    flex-shrink: 0;
-}
-
-.nb-log-text {
-    color: #5a8a58;
-}
-
-.nb-log-line.nb-ok .nb-log-text {
-    color: #5adc9e;
-}
-
-.nb-cursor {
-    display: inline-block;
-    width: 7px; height: 0.85em;
-    background: #7ccc5a;
-    vertical-align: middle;
-    margin-left: 2px;
-    animation: nb-blink 0.7s step-end infinite;
-}
-
-.nb-status-row {
-    display: flex;
-    gap: 1.6rem;
-    border-top: 1px solid rgba(124,204,90,0.15);
-    padding-top: 0.9rem;
-}
-
-.nb-stat {
-    font-size: 0.66rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #3a6a38;
-}
-
-.nb-stat strong {
-    color: #7ccc5a;
-    font-weight: 700;
-    display: block;
-    font-size: 0.78rem;
-    margin-top: 2px;
-}
-
-#nexus-boot.nb-done {
-    animation: nb-fadeout 0.6s ease forwards;
-}
-
-@keyframes nb-fadein {
-    from { opacity: 0; transform: translateX(-4px); }
-    to   { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes nb-blink {
-    50% { opacity: 0; }
-}
-
-@keyframes nb-fadeout {
-    0%   { opacity: 1; }
-    100% { opacity: 0; pointer-events: none; }
-}
-`;
-
-function buildLoader() {
-    const style = document.createElement('style');
-    style.textContent = CSS;
-    document.head.appendChild(style);
-
-    const el = document.createElement('div');
-    el.id = 'nexus-boot';
-    el.innerHTML = `
-        <div class="nb-inner">
-            <div class="nb-brand">
-                <div class="nb-title">N.E.X.U.S.</div>
-                <div class="nb-subtitle">Network of Enhanced eXpert Unified Systems</div>
-            </div>
-
-            <div class="nb-bar-section">
-                <div class="nb-bar-header">
-                    <span class="nb-seq-label" id="nb-seq-label">INIT SYSTÈME</span>
-                    <span class="nb-pct" id="nb-pct">0%</span>
-                </div>
-                <div class="nb-bar-wrap">
-                    <div class="nb-bar-fill" id="nb-fill"></div>
-                    <div class="nb-bar-segments" id="nb-segs"></div>
-                </div>
-            </div>
-
-            <div class="nb-log-section">
-                <div class="nb-log" id="nb-log">
-                    <div class="nb-log-line">
-                        <span class="nb-log-prefix">&gt;</span>
-                        <span class="nb-log-text">En attente de connexion...<span class="nb-cursor"></span></span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="nb-status-row">
-                <div class="nb-stat">Protocole<strong id="nb-proto">—</strong></div>
-                <div class="nb-stat">Agents indexés<strong id="nb-agents">—</strong></div>
-                <div class="nb-stat">Statut<strong id="nb-status">EN ATTENTE</strong></div>
-            </div>
-        </div>
-    `;
-
-    // Build bar segments
-    const segsEl = el.querySelector('#nb-segs');
-    SEQUENCES.forEach(() => {
-        const s = document.createElement('div');
-        s.className = 'nb-seg';
-        segsEl.appendChild(s);
-    });
-
-    document.body.prepend(el);
-    return el;
-}
-
-function addLog(text, ok = false) {
-    const log = document.getElementById('nb-log');
-    const cursor = log.querySelector('.nb-cursor');
-    if (cursor) cursor.parentElement.remove();
-
-    const line = document.createElement('div');
-    line.className = 'nb-log-line' + (ok ? ' nb-ok' : '');
-    line.innerHTML = `<span class="nb-log-prefix">&gt;</span><span class="nb-log-text">${text}<span class="nb-cursor"></span></span>`;
-    log.appendChild(line);
-
-    const lines = log.querySelectorAll('.nb-log-line');
-    if (lines.length > 4) lines[0].remove();
-}
-
-function runSequence(el, seqIdx, globalPctStart, resolve) {
-    if (seqIdx >= SEQUENCES.length) {
-        resolve();
-        return;
-    }
-
-    const seq = SEQUENCES[seqIdx];
-    const globalPctEnd = Math.round(((seqIdx + 1) / SEQUENCES.length) * 100);
-    const isLast = seqIdx === SEQUENCES.length - 1;
-
-    document.getElementById('nb-seq-label').textContent = seq.label;
-    addLog(seq.msg, isLast);
-
-    if (seqIdx === 1) {
-        document.getElementById('nb-proto').textContent = 'ALPHA-7';
-    }
-    if (seqIdx === 3) {
-        document.getElementById('nb-agents').textContent = '1 247';
-        document.getElementById('nb-status').textContent = 'CHARGEMENT';
-        document.getElementById('nb-status').style.color = '#d4c24a';
-    }
-    if (isLast) {
-        document.getElementById('nb-status').textContent = 'OPÉRATIONNEL';
-        document.getElementById('nb-status').style.color = '#5adc9e';
-    }
-
-    let pct = globalPctStart;
-    const steps = 30;
-    const increment = (globalPctEnd - globalPctStart) / steps;
-    const stepDelay = seq.duration / steps;
-
-    let step = 0;
-    const t = setInterval(() => {
-        step++;
-        pct = Math.min(globalPctStart + increment * step, globalPctEnd);
-        document.getElementById('nb-fill').style.width = pct + '%';
-        document.getElementById('nb-pct').textContent = Math.round(pct) + '%';
-
-        if (step >= steps) {
-            clearInterval(t);
-            setTimeout(() => {
-                runSequence(el, seqIdx + 1, globalPctEnd, resolve);
-            }, 80);
-        }
-    }, stepDelay);
-}
-
-function runLoader() {
-    return new Promise(resolve => {
-        const el = buildLoader();
-        runSequence(el, 0, 0, () => {
-            setTimeout(() => {
-                el.classList.add('nb-done');
-                setTimeout(() => {
-                    el.remove();
-                    resolve();
-                }, 650);
-            }, 400);
-        });
-    });
-}
-
-function showLoader(sequences = SEQUENCES, title = 'N.E.X.U.S.', duration = 0, heroImage = null) {
-    return new Promise(resolve => {
-        const style = document.createElement('style');
-        style.textContent = CSS;
-        document.head.appendChild(style);
-
-        const el = document.createElement('div');
-        el.id = 'nexus-boot';
-        el.innerHTML = `
-            <div class="nb-inner">
-                <div class="nb-brand">
-                    <div class="nb-title">${title}</div>
-                    <div class="nb-subtitle">${heroImage ? 'Chargement profil...' : 'Chargement en cours...'}</div>
-                </div>
-
-                ${heroImage ? `
-                    <div class="nb-hero-image">
-                        <img src="${heroImage}" alt="Profil" />
-                    </div>
-                ` : ''}
-
-                <div class="nb-bar-section">
-                    <div class="nb-bar-header">
-                        <span class="nb-seq-label" id="nb-seq-label">${sequences[0]?.label || 'CHARGEMENT'}</span>
-                        <span class="nb-pct" id="nb-pct">0%</span>
-                    </div>
-                    <div class="nb-bar-wrap">
-                        <div class="nb-bar-fill" id="nb-fill"></div>
-                        <div class="nb-bar-segments" id="nb-segs"></div>
-                    </div>
-                </div>
-
-                <div class="nb-log-section">
-                    <div class="nb-log" id="nb-log">
-                        <div class="nb-log-line">
-                            <span class="nb-log-prefix">&gt;</span>
-                            <span class="nb-log-text">En attente de connexion...<span class="nb-cursor"></span></span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="nb-status-row">
-                    <div class="nb-stat">Protocole<strong id="nb-proto">—</strong></div>
-                    <div class="nb-stat">Agents indexés<strong id="nb-agents">—</strong></div>
-                    <div class="nb-stat">Statut<strong id="nb-status">EN ATTENTE</strong></div>
-                </div>
-            </div>
-        `;
-
-        const segsEl = el.querySelector('#nb-segs');
-        sequences.forEach(() => {
-            const s = document.createElement('div');
-            s.className = 'nb-seg';
-            segsEl.appendChild(s);
-        });
-
-        document.body.prepend(el);
-
-        const nextStep = (seqIdx, globalPctStart) => {
-            if (seqIdx >= sequences.length) {
-                setTimeout(() => {
-                    el.classList.add('nb-done');
-                    setTimeout(() => {
-                        el.remove();
-                        style.remove();
-                        resolve();
-                    }, 650);
-                }, 400);
-                return;
-            }
-
-            const seq = sequences[seqIdx];
-            const globalPctEnd = Math.round(((seqIdx + 1) / sequences.length) * 100);
-            const isLast = seqIdx === sequences.length - 1;
-
-            document.getElementById('nb-seq-label').textContent = seq.label;
-            addLog(seq.msg, isLast);
-
-            if (seqIdx === 1) {
-                document.getElementById('nb-proto').textContent = 'ALPHA-7';
-            }
-            if (seqIdx === sequences.length - 1) {
-                document.getElementById('nb-status').textContent = 'OPÉRATIONNEL';
-                document.getElementById('nb-status').style.color = '#5adc9e';
-            }
-
-            let pct = globalPctStart;
-            const steps = 30;
-            const increment = (globalPctEnd - globalPctStart) / steps;
-            const stepDelay = seq.duration / steps;
-
-            let step = 0;
-            const t = setInterval(() => {
-                step++;
-                pct = Math.min(globalPctStart + increment * step, globalPctEnd);
-                document.getElementById('nb-fill').style.width = pct + '%';
-                document.getElementById('nb-pct').textContent = Math.round(pct) + '%';
-
-                if (step >= steps) {
-                    clearInterval(t);
-                    setTimeout(() => {
-                        nextStep(seqIdx + 1, globalPctEnd);
-                    }, 80);
-                }
-            }, stepDelay);
-        };
-
-        nextStep(0, 0);
-    });
-}
-
-document.documentElement.style.overflow = 'hidden';
-
-runLoader().then(() => {
-    document.documentElement.style.overflow = '';
-});
 ;// ./js/views/pages/Home.js
 
 
 
 class Home {
     async render() {
-        const heroes = HeroProvider.getAllHeroes();
-        const heroCount = heroes.length;
-        const favoriteCount = HeroProvider.getFavoriteCount();
-        const threatLevel = this.calculateThreatLevel(heroes);
         const lastUpdated = new Date().toLocaleTimeString('fr-FR');
 
         return `
@@ -972,9 +386,7 @@ class Home {
                     <div class="terminal-logs">
                         <p>> Initialisation du protocole de sécurité... <span class="text-ok">[OK]</span></p>
                         <p>> Décryptage des dossiers classifiés... <span class="text-ok">[OK]</span></p>
-                        <p>> Chargement de la base de données... <span class="text-ok">[${heroCount} ENTRÉES]</span></p>
                         <p>> Connexion au réseau satellite tactique... <span class="text-ok">[ÉTABLIE]</span></p>
-                        <p>> Analyse des niveaux de menace... <span class="text-ok">[${threatLevel}]</span></p>
                         <p class="blink-text">> En attente de commande opérateur_</p>
                     </div>
 
@@ -984,58 +396,8 @@ class Home {
                     </div>
                 </div>
 
-                <!-- PANNEAU DE STATISTIQUES -->
-                <div class="stats-panel">
-                    <div class="stat-card primary-stat">
-                        <div class="stat-header">SUJETS RÉFÉRENCÉS</div>
-                        <div class="stat-number">${heroCount.toLocaleString('fr-FR')}</div>
-                        <div class="stat-subtext">entités métahumaines</div>
-                        <div class="stat-bar">
-                            <div class="stat-bar-fill" style="width: ${Math.min(heroCount / 100, 100)}%"></div>
-                        </div>
-                    </div>
-
-                    <div class="stat-card threat-stat">
-                        <div class="stat-header">NIVEAU DE MENACE</div>
-                        <div class="stat-number threat-display">${threatLevel}</div>
-                        <div class="stat-subtext">menace globale</div>
-                        <div class="threat-indicator ${this.getThreatClass(threatLevel)}"></div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-header">FAVORIS ARCHIVÉS</div>
-                        <div class="stat-number">${favoriteCount}</div>
-                        <div class="stat-subtext">sujets marqués</div>
-                        <div class="stat-bar">
-                            <div class="stat-bar-fill accent-warning" style="width: ${Math.min((favoriteCount / heroCount) * 100, 100)}%"></div>
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-header">OPÉRATIONS ACTIVES</div>
-                        <div class="stat-number">${Math.floor(heroCount / 10)}</div>
-                        <div class="stat-subtext">missions en cours</div>
-                        <div class="stat-indicator active-ops"></div>
-                    </div>
-                </div>
-
             </section>
         `;
-    }
-
-    calculateThreatLevel(heroes) {
-        const avgPower = heroes.reduce((sum, h) => sum + (h.powerstats?.overall || 0), 0) / heroes.length;
-        if (avgPower >= 75) return 'DEFCON 1 (CRITIQUE)';
-        if (avgPower >= 60) return 'DEFCON 2 (ÉLEVÉ)';
-        if (avgPower >= 45) return 'DEFCON 3 (MODÉRÉ)';
-        return 'DEFCON 4 (STABLE)';
-    }
-
-    getThreatClass(threatLevel) {
-        if (threatLevel.includes('DEFCON 1')) return 'threat-critical';
-        if (threatLevel.includes('DEFCON 2')) return 'threat-high';
-        if (threatLevel.includes('DEFCON 3')) return 'threat-moderate';
-        return 'threat-low';
     }
 }
 
@@ -1046,12 +408,24 @@ class Home {
 
 
 class HeroesList {
-    constructor(page = 1) {
+    constructor(page = 1, publisher = null) {
         this.page = parseInt(page) || 1;
         this.pageSize = 9;
         this.heroes = HeroProvider.getAllHeroes();
-        this.filteredHeroes = this.heroes;
-        this.currentPublisher = null;
+        this.currentPublisher = publisher || null;
+        
+        if (this.currentPublisher) {
+            this.filteredHeroes = HeroProvider.getHeroesByPublisher(this.currentPublisher);
+        } else {
+            this.filteredHeroes = this.heroes;
+        }
+    }
+
+    getHeroPageUrl(pageNum) {
+        if (this.currentPublisher) {
+            return `#/heroes/${pageNum}?publisher=${encodeURIComponent(this.currentPublisher)}`;
+        }
+        return `#/heroes/${pageNum}`;
     }
 
     async render() {
@@ -1072,7 +446,7 @@ class HeroesList {
                             <select id="publisher-filter" class="filter-select">
                                 <option value="">Tous les éditeurs</option>
                                 ${publishers.map(pub => `
-                                    <option value="${pub}">${pub}</option>
+                                    <option value="${pub}" ${this.currentPublisher === pub ? 'selected' : ''}>${pub}</option>
                                 `).join('')}
                             </select>
                         </div>
@@ -1090,12 +464,12 @@ class HeroesList {
                 const publisherFilter = appElement.querySelector('#publisher-filter');
                 if (publisherFilter) {
                     publisherFilter.addEventListener('change', (e) => {
-                        this.currentPublisher = e.target.value;
-                        this.filteredHeroes = this.currentPublisher 
-                            ? HeroProvider.getHeroesByPublisher(this.currentPublisher)
-                            : this.heroes;
-                        this.page = 1;
-                        this.reRender();
+                        const selectedPublisher = e.target.value;
+                        if (selectedPublisher) {
+                            window.location.hash = `#/heroes/1?publisher=${encodeURIComponent(selectedPublisher)}`;
+                        } else {
+                            window.location.hash = '#/heroes/1';
+                        }
                     });
                 }
 
@@ -1170,15 +544,15 @@ class HeroesList {
             html += `
                 <div class="pagination">
                     ${this.page > 1 ? `
-                        <a href="#/heroes/1" class="btn-page">« Première</a>
-                        <a href="#/heroes/${this.page - 1}" class="btn-page">‹ Précédent</a>
+                        <a href="${this.getHeroPageUrl(1)}" class="btn-page">« Première</a>
+                        <a href="${this.getHeroPageUrl(this.page - 1)}" class="btn-page">‹ Précédent</a>
                     ` : ''}
                     
                     <span class="page-info">Page ${this.page} / ${totalPages}</span>
                     
                     ${this.page < totalPages ? `
-                        <a href="#/heroes/${this.page + 1}" class="btn-page">Suivant ›</a>
-                        <a href="#/heroes/${totalPages}" class="btn-page">Dernière »</a>
+                        <a href="${this.getHeroPageUrl(this.page + 1)}" class="btn-page">Suivant ›</a>
+                        <a href="${this.getHeroPageUrl(totalPages)}" class="btn-page">Dernière »</a>
                     ` : ''}
                 </div>
             `;
@@ -1193,12 +567,12 @@ class HeroesList {
             const publisherFilter = appElement.querySelector('#publisher-filter');
             if (publisherFilter) {
                 publisherFilter.addEventListener('change', (e) => {
-                    this.currentPublisher = e.target.value;
-                    this.filteredHeroes = this.currentPublisher 
-                        ? HeroProvider.getHeroesByPublisher(this.currentPublisher)
-                        : this.heroes;
-                    this.page = 1;
-                    this.reRender();
+                    const selectedPublisher = e.target.value;
+                    if (selectedPublisher) {
+                        window.location.hash = `#/heroes/1?publisher=${encodeURIComponent(selectedPublisher)}`;
+                    } else {
+                        window.location.hash = '#/heroes/1';
+                    }
                 });
             }
 
@@ -1343,10 +717,6 @@ class HeroDetail {
                         <h1>${services_Utils.escapeHtml(this.hero.name)}</h1>
                         <p class="hero-alias">Alias: ${services_Utils.escapeHtml(this.hero.alias)}</p>
                         <p class="hero-publisher">Éditeur: ${services_Utils.escapeHtml(this.hero.publisher)}</p>
-                        
-                        <div class="hero-description">
-                            ${services_Utils.escapeHtml(this.hero.description)}
-                        </div>
 
                         <div class="hero-stats">
                             <h2>Statistiques de Puissance</h2>
@@ -1444,21 +814,6 @@ class HeroDetail {
                     }
                     starBtns.forEach((b, idx) => {
                         b.classList.toggle('active', idx < selectedRating);
-                    });
-                });
-
-                btn.addEventListener('mouseenter', () => {
-                    const value = parseInt(btn.dataset.value);
-                    starBtns.forEach((b, idx) => {
-                        b.style.color = idx < value ? '#FFD700' : '#999';
-                    });
-                });
-            });
-
-            appElement.querySelectorAll('.rating-stars').forEach(container => {
-                container.addEventListener('mouseleave', () => {
-                    starBtns.forEach((b, idx) => {
-                        b.style.color = idx < selectedRating ? '#FFD700' : '#999';
                     });
                 });
             });
@@ -1785,7 +1140,6 @@ class Error404 {
 
 
 
-
 const routes = {
     '/': pages_Home,
     '/home': pages_Home,
@@ -1800,7 +1154,6 @@ const routes = {
 let appElement = null;
 let searchInput = null;
 let mainNav = null;
-let currentPage = null;
 let dataLoaded = false;
 
 function initDomReferences() {
@@ -1824,37 +1177,7 @@ function attachCardNavigation() {
         if (!heroId) return;
 
 
-        const hero = HeroProvider.getHeroById(heroId);
-        const heroImage = hero?.image || null;
-
-  
-        const profileSequences = [
-            { label: 'ACCÈS PROFIL',          msg: "Récupération du dossier de l'agent classifié...",  duration: 140 },
-            { label: 'BIOMÉTRIE',            msg: 'Scan biométrique et analyse ADN...',                duration: 130 },
-            { label: 'POUVOIRS DÉTECTÉS',    msg: 'Analyse des capacités métahumaines...',            duration: 150 },
-            { label: 'HISTORIQUE',           msg: 'Consultation des archives opérationnelles...',      duration: 120 },
-            { label: 'SYNCHRONISATION',      msg: 'Synchronisation données tactiques...',              duration: 110 },
-            { label: 'PROFIL CHARGÉ',        msg: 'Profil complet disponible - ACCÈS AUTORISÉ.',      duration: 95 },
-        ];
-
-        await showLoader(profileSequences, 'PROFIL AGENT', 0, heroImage);
-
-    
-        const transitionScreen = document.createElement('div');
-        transitionScreen.id = 'transition-screen-loader';
-        transitionScreen.style.cssText = `
-            position: fixed;
-            inset: 0;
-            background: #04090e;
-            z-index: 9999;
-            pointer-events: none;
-        `;
-        document.body.appendChild(transitionScreen);
-
-   
         window.location.hash = `#/hero/${heroId}`;
-        
-       
         setTimeout(router, 50);
     });
 }
@@ -2034,7 +1357,8 @@ async function router() {
     let pageInstance;
     if (PageClass === pages_HeroesList) {
         const pageNum = request.id || 1;
-        pageInstance = new pages_HeroesList(pageNum);
+        const publisher = request.queryParams?.publisher || null;
+        pageInstance = new pages_HeroesList(pageNum, publisher);
     } else if (PageClass === pages_HeroDetail) {
         const heroId = request.id;
         pageInstance = new pages_HeroDetail(heroId);
@@ -2047,7 +1371,6 @@ async function router() {
         searchInput.value = '';
     }
 
-    currentPage = pageInstance;
     appElement.innerHTML = await pageInstance.render();
 
 
@@ -2064,13 +1387,8 @@ window.addEventListener('load', () => {
     initDomReferences();
     setupNavigation();
     setupSearch();
-    router();
-});
-
-
-window.addEventListener('load', () => {
-    initDomReferences();
     attachCardNavigation();
+    router();
 });
 
 /******/ })()

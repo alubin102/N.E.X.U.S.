@@ -218,10 +218,6 @@ class HeroesList {
             images.forEach(img => imageObserver.observe(img));
         }
     }
-
-    async reRender() {
-        await this.render();
-    }
 }
 
 export default HeroesList;
