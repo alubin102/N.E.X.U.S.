@@ -1578,6 +1578,51 @@ footer {
     border-left-color: #cc7777;
 }
 
+/* === LAZY LOADING === */
+img[data-src],
+img.lazy-load {
+    background: linear-gradient(90deg, #0c1620 25%, #1a2d3a 50%, #0c1620 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+img.lazy-loading {
+    opacity: 0.6;
+    filter: blur(2px);
+    transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+img.lazy-loaded {
+    opacity: 1 !important;
+    filter: blur(0) !important;
+    animation: fadeInImage 0.4s ease-out;
+}
+
+@keyframes fadeInImage {
+    from {
+        opacity: 0.7;
+        filter: blur(1px);
+    }
+    to {
+        opacity: 1;
+        filter: blur(0);
+    }
+}
+
+img.lazy-error {
+    opacity: 0.5;
+    filter: grayscale(100%);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .hero-detail-container {

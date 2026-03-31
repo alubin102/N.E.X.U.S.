@@ -1,5 +1,6 @@
 import HeroProvider from '../../services/HeroProvider.js';
 import Utils from '../../services/Utils.js';
+import imageLoader from '../../services/ImageLoader.js';
 
 class HeroDetail {
     constructor(heroId) {
@@ -227,6 +228,9 @@ class HeroDetail {
                     window.location.hash = '#/heroes';
                 });
             }
+
+            // Initialiser le lazy loading des images
+            this.initLazyLoading();
         }, 0);
 
         return html;
@@ -371,7 +375,17 @@ class HeroDetail {
         `;
     }
 
-    
+    /**
+     * Initialise le lazy loading des images de la page
+     */
+    initLazyLoading() {
+        if ('IntersectionObserver' in window) {
+            const appElement = document.getElementById('app');
+            if (appElement) {
+                imageLoader.observeAll(appElement);
+            }
+        }
+    }
 }
 
 export default HeroDetail;

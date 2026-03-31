@@ -1,80 +1,79 @@
 
+# N.E.X.U.S - Base de Données de Super-Héros
+
+Application Single Page Application (SPA) pour explorer, noter et favoriser des super-héros.
 
 ## Installation et Démarrage
-
-### 1. Installation des dépendances
 
 ```bash
 cd nexus-database
 npm install
-```
-
-Installe Webpack et ses dépendances pour la compilation.
-
-### 2. Lancer en développement (avec serveur)
-
-```bash
 npm start
 ```
 
-- Lance le serveur de développement sur `http://localhost:8080`
-- Active le hot-reload (recharge auto à chaque changement)
-- Génère les source maps pour le débogage
+Visite `http://localhost:8080`
 
-### 3. Compiler pour la production
+**Autres commandes**:
+- `npm run build` - Compilation production (minifiée)
+- `npm run dev` - Compilation développement
+- `npm run watch` - Watch mode
 
-```bash
-npm run build
-```
+## Routes
 
-- Génère `dist/bundle.js` optimisé et minifié
-- Prêt pour déploiement en production
+| Route | Page |
+|-------|------|
+| `/#/` | Accueil (stats globales) |
+| `/#/heroes` | Listing paginé (9 héros/page) |
+| `/#/hero/1` | Détail d'un héros |
+| `/#/favorites` | Mes favoris |
 
-### 4. Compiler en mode développement
+**Paramètres**: `?publisher=Marvel` pour filtrer par éditeur
 
-```bash
-npm run dev
-```
+## Configuration
 
-- Génère `dist/bundle.js` sans minification
-- Inclut les source maps
+Fichier `config.js`:
+- API: superheroapi.com (731 héros)
+- PageSize: 9 héros par page
+- Débounce recherche: 500ms
 
-### 5. Surveillance automatique
-
-```bash
-npm run watch
-```
-
-- Recompile automatiquement à chaque changement
-- Utile pour développement sans serveur
-
-
-## Structure du Projet
+## Structure
 
 ```
-nexus-database/
-├── index.html                    
-├── data.json                    
-├── webpack.config.js             
-├── package.json                  
+js/
+├── app.js              # Routeur SPA
+├── config.js           # Config globale
+├── services/
+│   ├── HeroProvider.js # Gestion données + API
+│   ├── ImageLoader.js  # Lazy loading images
+│   └── Utils.js        # Utilitaires
+└── views/pages/        # Home, HeroesList, HeroDetail, Favorites
+```
 
-├── js/
-│   ├── app.js                   
-│   ├── config.js                
-│   ├── services/
-│   │   ├── HeroProvider.js     
-│   │   └── Utils.js             
-│   └── views/pages/
-│       ├── Home.js
-│       ├── HeroesList.js
-│       ├── HeroDetail.js
-│       ├── Favorites.js
-│       ├── About.js
-│       └── Error404.js
+## Fonctionnalités
 
-├── assets/
-│   └── style.css
+Plusieurs vues (Home, Liste, Détail, Favoris)  
+Pagination (9 héros/page)  
+Recherche temps réel avec debounce  
+Notation 1-5 étoiles (localStorage)  
+Favoris (localStorage)  
+Lazy loading images (IntersectionObserver)  
+Routeur SPA avec hash  
+Webpack bundler + hot reload  
 
-└── dist/
-    └── bundle.js               
+## Stockage Local
+
+- `hero_cache` - Cache des héros
+- `hero_favorites` - IDs favoris
+- `hero_ratings` - Notes et commentaires
+
+## Design
+
+Interface thématisée "système d'espionnage NEXUS" avec animations et gradient sombre.  
+**Aide design & quelques éléments visuels** : Claude IA
+
+## API Utilisée
+
+[superheroapi.com](https://www.superheroapi.com/) - 731 super-héros avec stats complètes
+
+
 

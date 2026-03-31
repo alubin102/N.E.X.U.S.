@@ -1,6 +1,7 @@
 
 import HeroProvider from '../../services/HeroProvider.js';
 import Utils from '../../services/Utils.js';
+import imageLoader from '../../services/ImageLoader.js';
 
 class Favorites {
     async render() {
@@ -21,6 +22,7 @@ class Favorites {
                 if (!appElement) return;
                 appElement.innerHTML = html;
                 this.attachFavoriteListeners();
+                this.initLazyLoading();
             }, 0);
             return html;
         }
@@ -40,6 +42,8 @@ class Favorites {
                         <img 
                             src="${hero.image || 'https://via.placeholder.com/300x400?text=No+Image'}"
                             alt="${hero.name}"
+                            class="lazy-load"
+                            data-src="${hero.image || 'https://via.placeholder.com/300x400?text=No+Image'}"
                             loading="lazy"
                         >
                         <button class="favorite-btn active" 
@@ -101,6 +105,22 @@ class Favorites {
                 }
             });
         });
+    }
+
+
+    initLazyLoading() {
+        if ('IntersectionObserver' in window) {
+            const appElement = document.getElementById('app');
+            if (appElement) {
+                imageLoader.reload();
+                imageLoader.observeAll(appElement);
+            }
+        } else {
+            const images = document.querySelectorAll('img[data-src]');
+            images.forEach(img => {
+                img.src = img.dataset.src;
+            });
+        }
     }
 }
 
