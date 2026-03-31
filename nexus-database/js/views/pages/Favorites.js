@@ -1,6 +1,4 @@
-/**
- * Page des super-héros favoris
- */
+
 import HeroProvider from '../../services/HeroProvider.js';
 import Utils from '../../services/Utils.js';
 
@@ -13,7 +11,7 @@ class Favorites {
                 <section class="favorites-section">
                     <h2>Mes Favoris</h2>
                     <div class="message info">
-                        💔 Vous n'avez pas encore de favoris.
+                        Vous n'avez pas encore de favoris.
                         <p><a href="#/heroes" class="link">Découvrez les super-héros</a></p>
                     </div>
                 </section>
@@ -37,7 +35,7 @@ class Favorites {
         favorites.forEach(hero => {
             const avgRating = hero.averageRating || 0;
             html += `
-                <article class="hero-card">
+                <article class="hero-card" data-hero-id="${hero.id}">
                     <div class="hero-card-image">
                         <img 
                             src="${hero.image || 'https://via.placeholder.com/300x400?text=No+Image'}"

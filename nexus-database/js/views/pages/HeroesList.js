@@ -2,12 +2,24 @@ import HeroProvider from '../../services/HeroProvider.js';
 import Utils from '../../services/Utils.js';
 
 class HeroesList {
-    constructor(page = 1) {
+    constructor(page = 1, publisher = null) {
         this.page = parseInt(page) || 1;
         this.pageSize = 9;
         this.heroes = HeroProvider.getAllHeroes();
-        this.filteredHeroes = this.heroes;
-        this.currentPublisher = null;
+        this.currentPublisher = publisher || null;
+        
+        if (this.currentPublisher) {
+            this.filteredHeroes = HeroProvider.getHeroesByPublisher(this.currentPublisher);
+        } else {
+            this.filteredHeroes = this.heroes;
+        }
+    }
+
+    getHeroPageUrl(pageNum) {
+        if (this.currentPublisher) {
+            return `#/heroes/${pageNum}?publisher=${encodeURIComponent(this.currentPublisher)}`;
+        }
+        return `#/heroes/${pageNum}`;
     }
 
     async render() {
@@ -28,13 +40,13 @@ class HeroesList {
                             <select id="publisher-filter" class="filter-select">
                                 <option value="">Tous les éditeurs</option>
                                 ${publishers.map(pub => `
-                                    <option value="${pub}">${pub}</option>
+                                    <option value="${pub}" ${this.currentPublisher === pub ? 'selected' : ''}>${pub}</option>
                                 `).join('')}
                             </select>
                         </div>
                     </div>
                     <div class="message info">
-                        📭 Aucun super-héro trouvé
+                        Aucun super-héro trouvé
                     </div>
                 </section>
             `;
@@ -46,12 +58,12 @@ class HeroesList {
                 const publisherFilter = appElement.querySelector('#publisher-filter');
                 if (publisherFilter) {
                     publisherFilter.addEventListener('change', (e) => {
-                        this.currentPublisher = e.target.value;
-                        this.filteredHeroes = this.currentPublisher 
-                            ? HeroProvider.getHeroesByPublisher(this.currentPublisher)
-                            : this.heroes;
-                        this.page = 1;
-                        this.reRender();
+                        const selectedPublisher = e.target.value;
+                        if (selectedPublisher) {
+                            window.location.hash = `#/heroes/1?publisher=${encodeURIComponent(selectedPublisher)}`;
+                        } else {
+                            window.location.hash = '#/heroes/1';
+                        }
                     });
                 }
 
@@ -88,7 +100,7 @@ class HeroesList {
             const avgRating = hero.averageRating || 0;
             
             html += `
-                <article class="hero-card">
+                <article class="hero-card" data-hero-id="${hero.id}">
                     <div class="hero-card-image">
                         <img 
                             src="${hero.image || 'https://via.placeholder.com/300x400?text=No+Image'}"
@@ -126,15 +138,15 @@ class HeroesList {
             html += `
                 <div class="pagination">
                     ${this.page > 1 ? `
-                        <a href="#/heroes/1" class="btn-page">« Première</a>
-                        <a href="#/heroes/${this.page - 1}" class="btn-page">‹ Précédent</a>
+                        <a href="${this.getHeroPageUrl(1)}" class="btn-page">« Première</a>
+                        <a href="${this.getHeroPageUrl(this.page - 1)}" class="btn-page">‹ Précédent</a>
                     ` : ''}
                     
                     <span class="page-info">Page ${this.page} / ${totalPages}</span>
                     
                     ${this.page < totalPages ? `
-                        <a href="#/heroes/${this.page + 1}" class="btn-page">Suivant ›</a>
-                        <a href="#/heroes/${totalPages}" class="btn-page">Dernière »</a>
+                        <a href="${this.getHeroPageUrl(this.page + 1)}" class="btn-page">Suivant ›</a>
+                        <a href="${this.getHeroPageUrl(totalPages)}" class="btn-page">Dernière »</a>
                     ` : ''}
                 </div>
             `;
@@ -149,12 +161,12 @@ class HeroesList {
             const publisherFilter = appElement.querySelector('#publisher-filter');
             if (publisherFilter) {
                 publisherFilter.addEventListener('change', (e) => {
-                    this.currentPublisher = e.target.value;
-                    this.filteredHeroes = this.currentPublisher 
-                        ? HeroProvider.getHeroesByPublisher(this.currentPublisher)
-                        : this.heroes;
-                    this.page = 1;
-                    this.reRender();
+                    const selectedPublisher = e.target.value;
+                    if (selectedPublisher) {
+                        window.location.hash = `#/heroes/1?publisher=${encodeURIComponent(selectedPublisher)}`;
+                    } else {
+                        window.location.hash = '#/heroes/1';
+                    }
                 });
             }
 

@@ -1,16 +1,14 @@
 import HeroProvider from './services/HeroProvider.js';
 import Utils from './services/Utils.js';
 import CONFIG from './config.js';
-// Importer les pages
+
 import Home from './views/pages/Home.js';
 import HeroesList from './views/pages/HeroesList.js';
 import HeroDetail from './views/pages/HeroDetail.js';
 import Favorites from './views/pages/Favorites.js';
 import Error404 from './views/pages/Error404.js';
 
-// ---------------------------------------
-// Configuration des routes (hash router)
-// ---------------------------------------
+
 
 const routes = {
     '/': Home,
@@ -21,14 +19,11 @@ const routes = {
     '/favorites': Favorites
 };
 
-// ---------------------------------------
-// État et éléments globaux
-// ---------------------------------------
+
 
 let appElement = null;
 let searchInput = null;
 let mainNav = null;
-let currentPage = null;
 let dataLoaded = false;
 
 function initDomReferences() {
@@ -38,21 +33,37 @@ function initDomReferences() {
     mainNav = document.getElementById('main-nav');
 }
 
+
+function attachCardNavigation() {
+    if (!appElement) return;
+    appElement.addEventListener('click', async (e) => {
+ 
+        if (e.target.closest('.favorite-btn')) return;
+
+        const card = e.target.closest('.hero-card');
+        if (!card) return;
+
+        const heroId = card.dataset.heroId || card.getAttribute('data-hero-id');
+        if (!heroId) return;
+
+
+        window.location.hash = `#/hero/${heroId}`;
+        setTimeout(router, 50);
+    });
+}
+
 async function ensureDataLoaded() {
     if (dataLoaded) return;
 
-    console.log(`🦸 ${CONFIG.app.name} v${CONFIG.app.version}`);
+    console.log(` ${CONFIG.app.name} v${CONFIG.app.version}`);
 
     const heroes = await HeroProvider.loadHeroes();
     HeroProvider.loadRatings();
     dataLoaded = true;
 
-    console.log(`✅ ${heroes.length} super-héros chargés`);
+    console.log(` ${heroes.length} super-héros chargés`);
 }
 
-// ---------------------------------------
-// Navigation
-// ---------------------------------------
 
 function navigate(path) {
     if (!path.startsWith('/')) path = '/' + path;
@@ -87,9 +98,7 @@ function setupNavigation() {
     });
 }
 
-// ---------------------------------------
-// Recherche
-// ---------------------------------------
+
 
 function performSearch(query) {
     const results = HeroProvider.searchHeroes(query);
@@ -127,7 +136,7 @@ function displaySearchResults(results, query) {
         const avgRating = hero.averageRating || 0;
 
         html += `
-            <article class="hero-card">
+            <article class="hero-card" data-hero-id="${hero.id}">
                 <div class="hero-card-image">
                     <img 
                         src="${hero.image || 'https://via.placeholder.com/300x400?text=No+Image'}"
@@ -194,9 +203,6 @@ function setupSearch() {
     });
 }
 
-// ---------------------------------------
-// Router principal
-// ---------------------------------------
 
 async function router() {
     initDomReferences();
@@ -206,7 +212,7 @@ async function router() {
 
     const request = Utils.parseRequestURL();
 
-    // Construire une clé de route à partir de l'URL parsée
+
     let routeKey;
     if (!request.resource) {
         routeKey = '/';
@@ -221,7 +227,8 @@ async function router() {
     let pageInstance;
     if (PageClass === HeroesList) {
         const pageNum = request.id || 1;
-        pageInstance = new HeroesList(pageNum);
+        const publisher = request.queryParams?.publisher || null;
+        pageInstance = new HeroesList(pageNum, publisher);
     } else if (PageClass === HeroDetail) {
         const heroId = request.id;
         pageInstance = new HeroDetail(heroId);
@@ -234,18 +241,22 @@ async function router() {
         searchInput.value = '';
     }
 
-    currentPage = pageInstance;
     appElement.innerHTML = await pageInstance.render();
+
+
+    const transitionScreen = document.getElementById('transition-screen-loader');
+    if (transitionScreen) {
+        transitionScreen.remove();
+    }
 }
 
-// ---------------------------------------
-// Écouteurs globaux
-// ---------------------------------------
+
 
 window.addEventListener('hashchange', router);
 window.addEventListener('load', () => {
     initDomReferences();
     setupNavigation();
     setupSearch();
+    attachCardNavigation();
     router();
 });

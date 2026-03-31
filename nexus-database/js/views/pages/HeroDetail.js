@@ -4,14 +4,41 @@ import Utils from '../../services/Utils.js';
 class HeroDetail {
     constructor(heroId) {
         this.heroId = parseInt(heroId);
+        this.hero = null;
+    }
+
+    async loadHeroData() {
+        // First try to get from cache
         this.hero = HeroProvider.getHeroById(this.heroId);
+        
+        // If not found, fetch directly from API
+        if (!this.hero) {
+            this.hero = await HeroProvider.fetchHeroById(this.heroId);
+            // Add to cache if found
+            if (this.hero) {
+                HeroProvider.heroes.push(this.hero);
+            }
+        }
+        
+        // Load ratings for this hero
+        if (this.hero) {
+            const ratings = HeroProvider.getRatings(this.hero.id) || [];
+            this.hero.averageRating = ratings.length > 0 
+                ? ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length 
+                : 0;
+        }
+        
+        return this.hero;
     }
 
     async render() {
+        // Ensure hero data is loaded
+        await this.loadHeroData();
+        
         if (!this.hero) {
             const html = `
                 <div class="message error">
-                    ⚠️ Super-héro non trouvé
+                    Super-héro non trouvé
                 </div>
             `;
             setTimeout(() => {
@@ -26,6 +53,10 @@ class HeroDetail {
         const ratings = HeroProvider.getRatings(this.hero.id) || [];
         const avgRating = this.hero.averageRating || 0;
         const stats = this.hero.stats || {};
+        const biography = this.hero.biography || {};
+        const appearance = this.hero.appearance || {};
+        const work = this.hero.work || {};
+        const connections = this.hero.connections || {};
 
         const html = `
             <section class="hero-detail">
@@ -59,6 +90,13 @@ class HeroDetail {
                         <div class="hero-stats">
                             <h2>Statistiques de Puissance</h2>
                             ${this.renderStats(stats)}
+                        </div>
+
+                        <div class="hero-info-sections">
+                            ${this.renderBiographySection(biography)}
+                            ${this.renderAppearanceSection(appearance)}
+                            ${this.renderWorkSection(work)}
+                            ${this.renderConnectionsSection(connections)}
                         </div>
 
                         <div class="rating-section">
@@ -227,6 +265,110 @@ class HeroDetail {
 
     renderStarsBig(rating) {
         return this.renderStars(rating);
+    }
+
+    renderBiographySection(biography) {
+        return `
+            <div class="info-section biography-section">
+                <h2>Biographie</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Nom complet:</span>
+                        <span class="info-value">${Utils.escapeHtml(biography.fullName || '-')}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Alter-ego:</span>
+                        <span class="info-value">${Utils.escapeHtml(biography.alterEgos || '-')}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Première apparition:</span>
+                        <span class="info-value">${Utils.escapeHtml(biography.firstAppearance || '-')}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Lieu de naissance:</span>
+                        <span class="info-value">${Utils.escapeHtml(biography.placeOfBirth || '-')}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Éditeur:</span>
+                        <span class="info-value">${Utils.escapeHtml(biography.publisher || '-')}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Alignement:</span>
+                        <span class="info-value">${Utils.escapeHtml(biography.alignment || '-')}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderAppearanceSection(appearance) {
+        return `
+            <div class="info-section appearance-section">
+                <h2>Apparence</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Genre:</span>
+                        <span class="info-value">${Utils.escapeHtml(appearance.gender || '-')}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Race:</span>
+                        <span class="info-value">${Utils.escapeHtml(appearance.race || '-')}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Couleur des yeux:</span>
+                        <span class="info-value">${Utils.escapeHtml(appearance.eyeColor || '-')}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Couleur des cheveux:</span>
+                        <span class="info-value">${Utils.escapeHtml(appearance.hairColor || '-')}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Hauteur:</span>
+                        <span class="info-value">${Utils.escapeHtml(appearance.height || '-')}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Poids:</span>
+                        <span class="info-value">${Utils.escapeHtml(appearance.weight || '-')}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderWorkSection(work) {
+        return `
+            <div class="info-section work-section">
+                <h2>Occupation</h2>
+                <div class="info-grid">
+                    <div class="info-item full-width">
+                        <span class="info-label">Occupation:</span>
+                        <span class="info-value">${Utils.escapeHtml(work.occupation || '-')}</span>
+                    </div>
+                    <div class="info-item full-width">
+                        <span class="info-label">Base:</span>
+                        <span class="info-value">${Utils.escapeHtml(work.base || '-')}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderConnectionsSection(connections) {
+        return `
+            <div class="info-section connections-section">
+                <h2>Connexions</h2>
+                <div class="info-grid">
+                    <div class="info-item full-width">
+                        <span class="info-label">Groupe d'affiliation:</span>
+                        <span class="info-value">${Utils.escapeHtml(connections.groupAffiliation || '-')}</span>
+                    </div>
+                    <div class="info-item full-width">
+                        <span class="info-label">Proches:</span>
+                        <span class="info-value">${Utils.escapeHtml(connections.relatives || '-')}</span>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     

@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>N.E.X.U.S.</title>
+    <title>N.E.X.U.S. - Base de données classifiée</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <script type="module" src="js/loader.js"></script>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/style.css">
@@ -17,7 +18,7 @@
             </div>
 
             <nav id="main-nav" aria-label="Navigation principale">
-                <a href="#/" data-link>Accueil</a>
+                <a href="#/" data-link class="active">Accueil</a>
                 <a href="#/heroes" data-link>Super-Héros</a>
                 <a href="#/favorites" data-link>Favoris</a>
             </nav>
@@ -29,11 +30,52 @@
     </header>
 
     <main id="app">
-        <div class="loader">Chargement...</div>
-    </main>
+        <div class="home-section">
+            
+            <div class="home-hero terminal-screen">
+                <div class="sys-status">
+                    <span>[ SYS.OP : ONLINE ]</span>
+                    <span>ACCRÉDITATION : NIVEAU 7</span>
+                    <span>RÉSEAU : SÉCURISÉ</span>
+                    <span>NODE : ORLÉANS_FR</span>
+                </div>
+
+                <h2>
+                    <span class="typing-text">ACCÈS AUTORISÉ : N.E.X.U.S.</span><span class="cursor"></span>
+                </h2>
+                <p class="tagline">Base de données globale des entités métahumaines et agents d'élite.</p>
+
+                <div class="terminal-logs">
+                    <p>> Initialisation du protocole de sécurité... <span class="text-ok">[OK]</span></p>
+                    <p>> Décryptage des dossiers classifiés... <span class="text-ok">[OK]</span></p>
+                    <p>> Connexion au réseau satellite tactique... <span class="text-ok">[ÉTABLIE]</span></p>
+                    <p class="blink-text">> En attente de commande opérateur_</p>
+                </div>
+
+                <div class="home-actions">
+                    <a href="#/heroes" class="btn btn-primary">[ INITIALISER LA RECHERCHE ]</a>
+                </div>
+            </div>
+
+            <div class="home-stats">
+                <div class="stat-card">
+                    <div class="stat-number">14,092</div>
+                    <div class="stat-label">Sujets Référencés</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number threat-level">DEFCON 3</div>
+                    <div class="stat-label">Niveau de Menace</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">42</div>
+                    <div class="stat-label">Opérations Actives</div>
+                </div>
+            </div>
+
+        </div>
+        </main>
 
     <footer>
-        
     </footer>
 
     <script type="module" src="js/app.js"></script>
