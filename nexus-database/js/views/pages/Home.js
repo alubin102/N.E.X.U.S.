@@ -7,7 +7,6 @@ class Home {
 
         return `
             <section class="home-section">
-                <!-- SYSTÈME DE LOGS TERMINAL -->
                 <div class="home-hero terminal-screen">
                     <div class="sys-status">
                         <span>[ SYS.OP : ONLINE ]</span>

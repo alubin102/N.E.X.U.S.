@@ -1,6 +1,3 @@
-/**
- * Page d'erreur 404
- */
 class Error404 {
     render() {
         return `

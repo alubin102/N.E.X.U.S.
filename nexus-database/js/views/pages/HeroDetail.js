@@ -9,19 +9,13 @@ class HeroDetail {
     }
 
     async loadHeroData() {
-        // First try to get from cache
         this.hero = HeroProvider.getHeroById(this.heroId);
-        
-        // If not found, fetch directly from API
         if (!this.hero) {
             this.hero = await HeroProvider.fetchHeroById(this.heroId);
-            // Add to cache if found
             if (this.hero) {
                 HeroProvider.heroes.push(this.hero);
             }
         }
-        
-        // Load ratings for this hero
         if (this.hero) {
             const ratings = HeroProvider.getRatings(this.hero.id) || [];
             this.hero.averageRating = ratings.length > 0 
@@ -33,7 +27,6 @@ class HeroDetail {
     }
 
     async render() {
-        // Ensure hero data is loaded
         await this.loadHeroData();
         
         if (!this.hero) {
@@ -210,7 +203,6 @@ class HeroDetail {
                 });
             }
 
-            // Initialiser le lazy loading des images
             this.initLazyLoading();
         }, 0);
 

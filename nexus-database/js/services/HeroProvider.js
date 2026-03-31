@@ -12,11 +12,8 @@ export default class HeroProvider {
         try {
             const data = localStorage.getItem('hero_cache');
             const heroes = data ? JSON.parse(data) : null;
-            
-            // Validate that cached heroes have required properties
             if (heroes && Array.isArray(heroes) && heroes.length > 0) {
                 const firstHero = heroes[0];
-                // If heroes don't have biography property, clear cache (old format)
                 if (!firstHero.biography) {
                     localStorage.removeItem('hero_cache');
                     return null;

@@ -294,14 +294,6 @@ class HeroProvider {
         }
     }
 
-    static getFavoriteCount() {
-        return HeroProvider.favorites.size;
-    }
-
-    static clearFavorites() {
-        HeroProvider.favorites.clear();
-        HeroProvider.saveFavorites();
-    }
 }
 
 
@@ -359,6 +351,150 @@ const Utils = {
 
 /* harmony default export */ const services_Utils = (Utils);
 
+;// ./js/services/ImageLoader.js
+/**
+ * Service de gestion du lazy loading des images
+ * Utilise IntersectionObserver pour charger les images à la demande
+ */
+
+class ImageLoader {
+    constructor(options = {}) {
+        this.options = {
+            rootMargin: options.rootMargin || '50px',
+            threshold: options.threshold || 0.01,
+            placeholderColor: options.placeholderColor || '#f0f0f0',
+            ...options
+        };
+
+        this.imageMap = new WeakMap();
+        this.initObserver();
+    }
+
+    /**
+     * Initialise l'IntersectionObserver
+     */
+    initObserver() {
+        this.observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    this.loadImage(entry.target);
+                }
+            });
+        }, {
+            rootMargin: this.options.rootMargin,
+            threshold: this.options.threshold
+        });
+    }
+
+    /**
+     * Charge une image
+     * @param {HTMLImageElement} img - L'élément image à charger
+     */
+    loadImage(img) {
+        const src = img.dataset.src || img.getAttribute('data-src');
+        const srcset = img.dataset.srcset || img.getAttribute('data-srcset');
+
+        if (!src) {
+            this.observer.unobserve(img);
+            return;
+        }
+
+        // Ajouter une classe de chargement
+        img.classList.add('lazy-loading');
+
+        // Créer une image temporaire pour vérifier que la source existe
+        const tempImg = new Image();
+
+        tempImg.onload = () => {
+            img.src = src;
+            if (srcset) {
+                img.srcset = srcset;
+            }
+            img.classList.remove('lazy-loading');
+            img.classList.add('lazy-loaded');
+            this.observer.unobserve(img);
+            
+            // Déclencher un événement personnalisé
+            img.dispatchEvent(new Event('lazyloaded'));
+        };
+
+        tempImg.onerror = () => {
+            // Si l'image ne peut pas être chargée, utiliser un placeholder
+            this.setFallbackImage(img);
+            this.observer.unobserve(img);
+            
+            // Déclencher un événement personnalisé d'erreur
+            img.dispatchEvent(new Event('lazyloaderror'));
+        };
+
+        // Lancer le chargement
+        tempImg.src = src;
+    }
+
+    /**
+     * Définit une image par défaut en cas d'erreur
+     * @param {HTMLImageElement} img
+     */
+    setFallbackImage(img) {
+        const fallback = img.dataset.fallback || 
+                        'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"%3E%3Crect fill="%23f0f0f0" width="300" height="400"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="14" fill="%23999"%3ENo Image%3C/text%3E%3C/svg%3E';
+        
+        img.src = fallback;
+        img.classList.remove('lazy-loading');
+        img.classList.add('lazy-error');
+    }
+
+    /**
+     * Enregistre une image pour le lazy loading
+     * @param {HTMLImageElement} img
+     */
+    observe(img) {
+        if (img.classList.contains('lazy-load') || img.dataset.src) {
+            this.observer.observe(img);
+        }
+    }
+
+    /**
+     * Enregistre toutes les images avec la classe 'lazy-load'
+     * @param {HTMLElement} container - Le conteneur où chercher les images (par défaut document)
+     */
+    observeAll(container = document) {
+        const lazyImages = container.querySelectorAll('img[data-src], img.lazy-load');
+        lazyImages.forEach(img => this.observe(img));
+    }
+
+    /**
+     * Arrête d'observer une image
+     * @param {HTMLImageElement} img
+     */
+    unobserve(img) {
+        this.observer.unobserve(img);
+    }
+
+    /**
+     * Arrête d'observer toutes les images
+     */
+    disconnect() {
+        this.observer.disconnect();
+    }
+
+    /**
+     * Recharge les images non chargées
+     */
+    reload() {
+        if (this.observer) {
+            this.observer.disconnect();
+        }
+        this.initObserver();
+        this.observeAll();
+    }
+}
+
+// Export comme singleton
+const imageLoader = new ImageLoader();
+
+/* harmony default export */ const services_ImageLoader = (imageLoader);
+
 ;// ./js/views/pages/Home.js
 
 
@@ -404,6 +540,7 @@ class Home {
 /* harmony default export */ const pages_Home = (Home);
 
 ;// ./js/views/pages/HeroesList.js
+
 
 
 
@@ -609,30 +746,28 @@ class HeroesList {
     }
 
     initLazyLoading() {
+        // Utilise le service ImageLoader pour un lazy loading robuste
         if ('IntersectionObserver' in window) {
-            const images = document.querySelectorAll('img.lazy-load');
-            const imageObserver = new IntersectionObserver((entries, observer) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const img = entry.target;
-                        img.src = img.dataset.src;
-                        img.classList.remove('lazy-load');
-                        observer.unobserve(img);
-                    }
-                });
+            const appElement = document.getElementById('app');
+            if (appElement) {
+                // Recharge l'observer et observe toutes les images non chargées
+                services_ImageLoader.reload();
+                services_ImageLoader.observeAll(appElement);
+            }
+        } else {
+            // Fallback pour les navigateurs sans IntersectionObserver
+            const images = document.querySelectorAll('img[data-src]');
+            images.forEach(img => {
+                img.src = img.dataset.src;
             });
-            images.forEach(img => imageObserver.observe(img));
         }
-    }
-
-    async reRender() {
-        await this.render();
     }
 }
 
 /* harmony default export */ const pages_HeroesList = (HeroesList);
 
 ;// ./js/views/pages/HeroDetail.js
+
 
 
 
@@ -736,7 +871,7 @@ class HeroDetail {
                             ${avgRating > 0 ? `
                                 <div class="rating-summary">
                                     <div class="average-rating">
-                                        <span class="stars-big">${this.renderStarsBig(avgRating)}</span>
+                                        <span class="stars-big">${this.renderStars(avgRating)}</span>
                                         <span class="rating-number">${avgRating.toFixed(1)}/5</span>
                                     </div>
                                 </div>
@@ -843,6 +978,9 @@ class HeroDetail {
                     window.location.hash = '#/heroes';
                 });
             }
+
+            // Initialiser le lazy loading des images
+            this.initLazyLoading();
         }, 0);
 
         return html;
@@ -877,10 +1015,6 @@ class HeroDetail {
         if (hasHalf) stars += '½';
         stars += '☆'.repeat(5 - Math.ceil(rating));
         return stars;
-    }
-
-    renderStarsBig(rating) {
-        return this.renderStars(rating);
     }
 
     renderBiographySection(biography) {
@@ -987,12 +1121,23 @@ class HeroDetail {
         `;
     }
 
-    
+    /**
+     * Initialise le lazy loading des images de la page
+     */
+    initLazyLoading() {
+        if ('IntersectionObserver' in window) {
+            const appElement = document.getElementById('app');
+            if (appElement) {
+                services_ImageLoader.observeAll(appElement);
+            }
+        }
+    }
 }
 
 /* harmony default export */ const pages_HeroDetail = (HeroDetail);
 
 ;// ./js/views/pages/Favorites.js
+
 
 
 
@@ -1016,6 +1161,7 @@ class Favorites {
                 if (!appElement) return;
                 appElement.innerHTML = html;
                 this.attachFavoriteListeners();
+                this.initLazyLoading();
             }, 0);
             return html;
         }
@@ -1035,6 +1181,8 @@ class Favorites {
                         <img 
                             src="${hero.image || 'https://via.placeholder.com/300x400?text=No+Image'}"
                             alt="${hero.name}"
+                            class="lazy-load"
+                            data-src="${hero.image || 'https://via.placeholder.com/300x400?text=No+Image'}"
                             loading="lazy"
                         >
                         <button class="favorite-btn active" 
@@ -1097,6 +1245,22 @@ class Favorites {
             });
         });
     }
+
+
+    initLazyLoading() {
+        if ('IntersectionObserver' in window) {
+            const appElement = document.getElementById('app');
+            if (appElement) {
+                services_ImageLoader.reload();
+                services_ImageLoader.observeAll(appElement);
+            }
+        } else {
+            const images = document.querySelectorAll('img[data-src]');
+            images.forEach(img => {
+                img.src = img.dataset.src;
+            });
+        }
+    }
 }
 
 /* harmony default export */ const pages_Favorites = (Favorites);
@@ -1128,6 +1292,7 @@ class Error404 {
 /* harmony default export */ const pages_Error404 = (Error404);
 
 ;// ./js/app.js
+
 
 
 
@@ -1271,6 +1436,8 @@ function displaySearchResults(results, query) {
                     <img 
                         src="${hero.image || 'https://via.placeholder.com/300x400?text=No+Image'}"
                         alt="${hero.name}"
+                        class="lazy-load"
+                        data-src="${hero.image || 'https://via.placeholder.com/300x400?text=No+Image'}"
                         loading="lazy"
                     >
                     <button class="favorite-btn ${isFav ? 'active' : ''}" 
@@ -1295,6 +1462,12 @@ function displaySearchResults(results, query) {
 
     html += '</div></section>';
     appElement.innerHTML = html;
+
+    // Initialiser le lazy loading pour les images de recherche
+    if ('IntersectionObserver' in window) {
+        services_ImageLoader.reload();
+        services_ImageLoader.observeAll(appElement);
+    }
 
     attachSearchListeners();
 }
@@ -1372,12 +1545,6 @@ async function router() {
     }
 
     appElement.innerHTML = await pageInstance.render();
-
-
-    const transitionScreen = document.getElementById('transition-screen-loader');
-    if (transitionScreen) {
-        transitionScreen.remove();
-    }
 }
 
 
