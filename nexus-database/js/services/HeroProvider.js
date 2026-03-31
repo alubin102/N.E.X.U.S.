@@ -46,43 +46,8 @@ export default class HeroProvider {
             }
         }
 
-        HeroProvider.heroes = HeroProvider.mergeHeroes([], apiHeroes || []);
-        
-        // Ensure all heroes have required properties
-        HeroProvider.heroes = HeroProvider.heroes.map(hero => HeroProvider.ensureHeroStructure(hero));
-        
+        HeroProvider.heroes = apiHeroes || [];
         return HeroProvider.heroes;
-    }
-    
-    static ensureHeroStructure(hero) {
-        // Make sure all heroes have all required properties
-        return {
-            ...hero,
-            biography: hero.biography || {
-                fullName: '-',
-                alterEgos: '-',
-                firstAppearance: '-',
-                placeOfBirth: '-',
-                publisher: '-',
-                alignment: '-'
-            },
-            appearance: hero.appearance || {
-                gender: '-',
-                race: '-',
-                height: '-',
-                weight: '-',
-                eyeColor: '-',
-                hairColor: '-'
-            },
-            work: hero.work || {
-                occupation: '-',
-                base: '-'
-            },
-            connections: hero.connections || {
-                groupAffiliation: '-',
-                relatives: '-'
-            }
-        };
     }
 
     static async fetchAllApiHeroes() {
@@ -110,107 +75,55 @@ export default class HeroProvider {
             const apiHero = await response.json();
             if (!apiHero || apiHero.response !== 'success') return null;
 
-            const normalizedHero = HeroProvider.normalizeApiHero(apiHero);
-            return HeroProvider.ensureHeroStructure(normalizedHero);
+            return {
+                id: parseInt(apiHero.id),
+                name: apiHero.name || 'Inconnu',
+                alias: apiHero.biography?.['full-name'] || apiHero.name || 'Inconnu',
+                publisher: apiHero.biography?.publisher || 'Inconnu',
+                image: apiHero.image?.url || '',
+                biography: {
+                    fullName: apiHero.biography?.['full-name'] || '-',
+                    alterEgos: apiHero.biography?.['alter-egos'] || '-',
+                    firstAppearance: apiHero.biography?.['first-appearance'] || '-',
+                    placeOfBirth: apiHero.biography?.['place-of-birth'] || '-',
+                    publisher: apiHero.biography?.publisher || '-',
+                    alignment: apiHero.biography?.alignment || '-'
+                },
+                appearance: {
+                    gender: apiHero.appearance?.gender || '-',
+                    race: apiHero.appearance?.race || '-',
+                    height: apiHero.appearance?.height?.[0] || '-',
+                    weight: apiHero.appearance?.weight?.[0] || '-',
+                    eyeColor: apiHero.appearance?.['eye-color'] || '-',
+                    hairColor: apiHero.appearance?.['hair-color'] || '-'
+                },
+                work: {
+                    occupation: apiHero.work?.occupation || '-',
+                    base: apiHero.work?.base || '-'
+                },
+                connections: {
+                    groupAffiliation: apiHero.connections?.['group-affiliation'] || '-',
+                    relatives: apiHero.connections?.relatives || '-'
+                },
+                stats: {
+                    intelligence: HeroProvider.toNumber(apiHero.powerstats?.intelligence),
+                    strength: HeroProvider.toNumber(apiHero.powerstats?.strength),
+                    speed: HeroProvider.toNumber(apiHero.powerstats?.speed),
+                    durability: HeroProvider.toNumber(apiHero.powerstats?.durability),
+                    power: HeroProvider.toNumber(apiHero.powerstats?.power),
+                    combat: HeroProvider.toNumber(apiHero.powerstats?.combat)
+                },
+                ratings: [],
+                averageRating: 0
+            };
         } catch (error) {
             return null;
         }
     }
 
-    static normalizeApiHero(apiHero) {
-        const fullName = apiHero.biography?.['full-name'] || '';
-        const occupation = apiHero.work?.occupation || '';
-        const placeOfBirth = apiHero.biography?.['place-of-birth'] || '';
-        const descriptionParts = [occupation, placeOfBirth].filter(Boolean);
-
-        return {
-            id: parseInt(apiHero.id),
-            name: apiHero.name || 'Inconnu',
-            alias: fullName || apiHero.name || 'Inconnu',
-            publisher: apiHero.biography?.publisher || 'Inconnu',
-            description: descriptionParts.join(' | ') || 'Aucune description disponible',
-            image: apiHero.image?.url || '',
-            
-            // Biography details
-            biography: {
-                fullName: apiHero.biography?.['full-name'] || '-',
-                alterEgos: apiHero.biography?.['alter-egos'] || '-',
-                firstAppearance: apiHero.biography?.['first-appearance'] || '-',
-                placeOfBirth: apiHero.biography?.['place-of-birth'] || '-',
-                publisher: apiHero.biography?.publisher || '-',
-                alignment: apiHero.biography?.alignment || '-'
-            },
-            
-            // Appearance details
-            appearance: {
-                gender: apiHero.appearance?.gender || '-',
-                race: apiHero.appearance?.race || '-',
-                height: apiHero.appearance?.height?.[0] || '-',
-                weight: apiHero.appearance?.weight?.[0] || '-',
-                eyeColor: apiHero.appearance?.['eye-color'] || '-',
-                hairColor: apiHero.appearance?.['hair-color'] || '-'
-            },
-            
-            // Work details
-            work: {
-                occupation: apiHero.work?.occupation || '-',
-                base: apiHero.work?.base || '-'
-            },
-            
-            // Connections
-            connections: {
-                groupAffiliation: apiHero.connections?.['group-affiliation'] || '-',
-                relatives: apiHero.connections?.relatives || '-'
-            },
-            
-            stats: {
-                intelligence: HeroProvider.toNumber(apiHero.powerstats?.intelligence),
-                strength: HeroProvider.toNumber(apiHero.powerstats?.strength),
-                speed: HeroProvider.toNumber(apiHero.powerstats?.speed),
-                durability: HeroProvider.toNumber(apiHero.powerstats?.durability),
-                power: HeroProvider.toNumber(apiHero.powerstats?.power),
-                combat: HeroProvider.toNumber(apiHero.powerstats?.combat)
-            },
-            ratings: [],
-            averageRating: 0
-        };
-    }
-
     static toNumber(value) {
         const n = parseInt(value, 10);
         return Number.isNaN(n) ? 0 : n;
-    }
-
-    static mergeHeroes(localHeroes, apiHeroes) {
-        const merged = new Map();
-
-        localHeroes.forEach(hero => {
-            merged.set(hero.id, hero);
-        });
-
-        apiHeroes.forEach(hero => {
-            if (!merged.has(hero.id)) {
-                merged.set(hero.id, hero);
-                return;
-            }
-
-            const existing = merged.get(hero.id);
-            merged.set(hero.id, {
-                ...hero,
-                ...existing,
-                name: existing.name || hero.name,
-                alias: existing.alias || hero.alias,
-                publisher: existing.publisher || hero.publisher,
-                description: existing.description || hero.description,
-                image: existing.image || hero.image,
-                stats: {
-                    ...hero.stats,
-                    ...(existing.stats || {})
-                }
-            });
-        });
-
-        return Array.from(merged.values());
     }
 
     static getAllHeroes() {
@@ -347,13 +260,5 @@ export default class HeroProvider {
         }
     }
 
-    static getFavoriteCount() {
-        return HeroProvider.favorites.size;
-    }
-
-    static clearFavorites() {
-        HeroProvider.favorites.clear();
-        HeroProvider.saveFavorites();
-    }
 }
 

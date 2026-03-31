@@ -220,10 +220,6 @@ class HeroesList {
             });
         }
     }
-
-    async reRender() {
-        await this.render();
-    }
 }
 
 export default HeroesList;
